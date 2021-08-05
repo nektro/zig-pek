@@ -8,6 +8,7 @@ pub const Value = union(enum) {
     element: Element,
     attr: Attr,
     string: []const u8,
+    replacement: []const []const u8,
 };
 
 pub const Element = struct {
@@ -103,7 +104,18 @@ const Parser = struct {
         if (self.tokens[self.index] == .string) {
             return Value{ .string = self.eat(.string) };
         }
+        if (self.tryEatSymbol("{")) {
+            return Value{ .replacement = self.doReplacement() };
+        }
         return Value{ .element = self.doElement() };
+    }
+
+    pub fn doReplacement(comptime self: *Parser) []const []const u8 {
+        var ret: []const []const u8 = &.{};
+        while (!self.tryEatSymbol("}")) {
+            ret = ret ++ &[_][]const u8{self.eat(.word)};
+        }
+        return ret;
     }
 
     fn eat(comptime self: *Parser, comptime typ: std.meta.Tag(Token)) []const u8 {

@@ -64,6 +64,20 @@ pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype, ind
         .string => |v| {
             try writer.writeAll(v[1 .. v.len - 1]);
         },
+        .replacement => |v| {
+            const x = @field(data, v[0]);
+            if (v.len == 1) {
+                const TO = @TypeOf(x);
+
+                if (comptime std.meta.trait.isZigString(TO)) {
+                    try writer.print("{s}", .{x});
+                    return;
+                }
+                @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
+            } else {
+                try compile(writer, astgen.Value{ .replacement = v[1..] }, x, indent, flag1);
+            }
+        },
         else => unreachable,
     }
 }

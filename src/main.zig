@@ -12,6 +12,8 @@ const example_document =
     \\        h1("Pek Example")
     \\        hr
     \\        p("This is an example HTML document written in "a[href="https://github.com/nektro/zig-pek"]("Pek")".")
+    \\        p("Pek is written by "{author}".")
+    \\        p("Her favorite plant is the "{favorite flower})
     \\    )
     \\)
 ;
@@ -21,6 +23,12 @@ pub fn main() !void {
     std.debug.print("\n", .{});
 
     const doc = comptime pek.parse(example_document);
-    try pek.compile(std.io.getStdErr().writer(), doc, .{}, 0, false);
+    const data = .{
+        .author = "Meghan D",
+        .favorite = .{
+            .flower = "Sunflower",
+        },
+    };
+    try pek.compile(std.io.getStdErr().writer(), doc, data, 0, false);
     std.debug.print("\n", .{});
 }
