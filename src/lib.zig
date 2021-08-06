@@ -58,7 +58,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
 
                 if (!hastext) try writer.writeAll("\n");
                 inline for (v.children) |it| {
-                    try compile(writer, it, data, indent + 1, !hastext);
+                    try do(writer, it, data, indent + 1, !hastext);
                 }
                 if (!hastext) for (range(indent)) |_| try writer.writeAll("    ");
                 try writer.print("</{s}>", .{v.name});
@@ -79,7 +79,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
                 }
                 @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
             } else {
-                try compile(writer, astgen.Value{ .replacement = v[1..] }, x, indent, flag1);
+                try do(writer, astgen.Value{ .replacement = v[1..] }, x, indent, flag1);
             }
         },
         else => unreachable,
