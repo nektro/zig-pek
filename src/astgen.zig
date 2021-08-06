@@ -152,7 +152,9 @@ const Parser = struct {
 
     pub fn doReplacement(comptime self: *Parser) []const string {
         var ret: []const string = &.{};
+        ret = ret ++ &[_]string{self.eat(.word)};
         while (!self.tryEatSymbol("}")) {
+            self.eatSymbol(".");
             ret = ret ++ &[_]string{self.eat(.word)};
         }
         return ret;

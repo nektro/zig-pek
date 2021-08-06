@@ -13,7 +13,7 @@ const example_document =
     \\        hr
     \\        p("This is an example HTML document written in "a[href="https://github.com/nektro/zig-pek"]("Pek")".")
     \\        p("Pek is written by "{author}".")
-    \\        p("Her favorite plant is the "{favorite flower})
+    \\        p("Her favorite plant is the "{favorite.flower})
     \\        br
     \\        p("The most populous US cities are:")
     \\        ul(

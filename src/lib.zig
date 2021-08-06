@@ -29,7 +29,7 @@ const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
 
 pub fn parse(comptime input: []const u8) astgen.Value {
-    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/' })) };
+    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.' })) };
 }
 
 pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
