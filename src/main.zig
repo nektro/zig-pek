@@ -18,7 +18,7 @@ const example_document =
     \\        p("The most populous US cities are:")
     \\        ul(
     \\            {#each top_cities}
-    \\            li({name})
+    \\            li({this.name}", "{this.state.code})
     \\            /each/
     \\        )
     \\    )
@@ -36,11 +36,11 @@ pub fn main() !void {
             .flower = "Sunflower",
         },
         .top_cities = .{
-            .{ .name = "New York" },
-            .{ .name = "Los Angeles" },
-            .{ .name = "Chicago" },
-            .{ .name = "Houston" },
-            .{ .name = "Phoenix" },
+            .{ .name = "New York", .state = .{ .code = "NY" } },
+            .{ .name = "Los Angeles", .state = .{ .code = "CA" } },
+            .{ .name = "Chicago", .state = .{ .code = "IL" } },
+            .{ .name = "Houston", .state = .{ .code = "TX" } },
+            .{ .name = "Phoenix", .state = .{ .code = "AZ" } },
         },
     });
     std.debug.print("\n", .{});
