@@ -33,10 +33,10 @@ pub fn parse(comptime input: []const u8) astgen.Value {
 }
 
 pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
-    return try do(writer, value, data, 0, false);
+    return try do(writer, value, data, data, 0, false);
 }
 
-fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usize, flag1: bool) anyerror!void {
+fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
@@ -58,7 +58,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
 
                 if (!hastext) try writer.writeAll("\n");
                 inline for (v.children) |it| {
-                    try do(writer, it, data, indent + 1, !hastext);
+                    try do(writer, it, data, ctx, indent + 1, !hastext);
                 }
                 if (!hastext) for (range(indent)) |_| try writer.writeAll("    ");
                 try writer.print("</{s}>", .{v.name});
@@ -69,18 +69,14 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
             try writer.writeAll(v[1 .. v.len - 1]);
         },
         .replacement => |v| {
-            const x = @field(data, v[0]);
-            if (v.len == 1) {
-                const TO = @TypeOf(x);
+            const x = if (comptime std.mem.eql(u8, v[0], "this")) search(data, v[1..]) else search(ctx, v);
+            const TO = @TypeOf(x);
 
-                if (comptime std.meta.trait.isZigString(TO)) {
-                    try writer.print("{s}", .{x});
-                    return;
-                }
-                @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
-            } else {
-                try do(writer, astgen.Value{ .replacement = v[1..] }, x, indent, flag1);
+            if (comptime std.meta.trait.isZigString(TO)) {
+                try writer.print("{s}", .{x});
+                return;
             }
+            @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
         },
         .block => |v| {
             const x = comptime search(data, v.args);
@@ -89,7 +85,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
                 .each => {
                     inline for (x) |item| {
                         inline for (v.body) |val| {
-                            try do(writer, val, item, indent, flag1);
+                            try do(writer, val, item, ctx, indent, flag1);
                         }
                     }
                 },
