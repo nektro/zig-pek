@@ -30,7 +30,7 @@ pub fn main() !void {
     std.debug.print("\n", .{});
 
     const doc = comptime pek.parse(example_document);
-    const data = .{
+    try pek.compile(std.io.getStdErr().writer(), doc, .{
         .author = "Meghan D",
         .favorite = .{
             .flower = "Sunflower",
@@ -42,7 +42,6 @@ pub fn main() !void {
             .{ .name = "Houston" },
             .{ .name = "Phoenix" },
         },
-    };
-    try pek.compile(std.io.getStdErr().writer(), doc, data);
+    });
     std.debug.print("\n", .{});
 }
