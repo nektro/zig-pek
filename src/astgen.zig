@@ -1,25 +1,27 @@
 const std = @import("std");
 const Token = @import("./tokenize.zig").Token;
 
+const string = []const u8;
+
 //
 //
 
 pub const Value = union(enum) {
     element: Element,
     attr: Attr,
-    string: []const u8,
-    replacement: []const []const u8,
+    string: string,
+    replacement: []const string,
 };
 
 pub const Element = struct {
-    name: []const u8,
+    name: string,
     attrs: []const Attr,
     children: []const Value,
 };
 
 pub const Attr = struct {
-    key: []const u8,
-    value: []const u8,
+    key: string,
+    value: string,
 };
 
 //
@@ -58,7 +60,7 @@ const Parser = struct {
         return ret;
     }
 
-    fn tryEatSymbol(comptime self: *Parser, comptime needle: []const u8) bool {
+    fn tryEatSymbol(comptime self: *Parser, comptime needle: string) bool {
         switch (self.tokens[self.index]) {
             .symbol => |sym| {
                 if (std.mem.eql(u8, sym, needle)) {
@@ -83,7 +85,7 @@ const Parser = struct {
         };
     }
 
-    pub fn eatSymbol(comptime self: *Parser, comptime needle: []const u8) void {
+    pub fn eatSymbol(comptime self: *Parser, comptime needle: string) void {
         std.debug.assert(std.mem.eql(u8, self.eat(.symbol), needle));
     }
 
@@ -110,15 +112,15 @@ const Parser = struct {
         return Value{ .element = self.doElement() };
     }
 
-    pub fn doReplacement(comptime self: *Parser) []const []const u8 {
-        var ret: []const []const u8 = &.{};
+    pub fn doReplacement(comptime self: *Parser) []const string {
+        var ret: []const string = &.{};
         while (!self.tryEatSymbol("}")) {
-            ret = ret ++ &[_][]const u8{self.eat(.word)};
+            ret = ret ++ &[_]string{self.eat(.word)};
         }
         return ret;
     }
 
-    fn eat(comptime self: *Parser, comptime typ: std.meta.Tag(Token)) []const u8 {
+    fn eat(comptime self: *Parser, comptime typ: std.meta.Tag(Token)) string {
         defer self.index += 1;
         return @field(self.tokens[self.index], @tagName(typ));
     }
