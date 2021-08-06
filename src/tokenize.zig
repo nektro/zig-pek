@@ -34,7 +34,7 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
 
         blk: {
             if (mode == 0) {
-                if (c == '#') {
+                if (c == '/' and input[i + 1] == '/') {
                     mode = 1;
                     shouldFlush = false;
                     break :blk;
