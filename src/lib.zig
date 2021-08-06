@@ -95,6 +95,6 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
     }
 }
 
-fn search(comptime T: anytype, comptime args: []const []const u8) @TypeOf(if (args.len == 1) @field(T, args[0]) else search(@TypeOf(@field(T, args[0])), args[1..])) {
-    return if (args.len == 1) @field(T, args[0]) else search(@TypeOf(@field(T, args[0])), args[1..]);
+fn search(comptime T: anytype, comptime args: []const []const u8) @TypeOf(if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..])) {
+    return if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..]);
 }
