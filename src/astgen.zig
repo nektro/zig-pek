@@ -11,6 +11,8 @@ pub const Value = union(enum) {
     attr: Attr,
     string: string,
     replacement: []const string,
+    block: Block,
+    function: Fn,
 };
 
 pub const Element = struct {
@@ -22,6 +24,21 @@ pub const Element = struct {
 pub const Attr = struct {
     key: string,
     value: string,
+};
+
+pub const Block = struct {
+    name: Type,
+    args: []const string,
+    body: []const Value,
+
+    pub const Type = enum {
+        each,
+    };
+};
+
+pub const Fn = struct {
+    name: string,
+    args: []const string,
 };
 
 //
@@ -107,6 +124,27 @@ const Parser = struct {
             return Value{ .string = self.eat(.string) };
         }
         if (self.tryEatSymbol("{")) {
+            if (self.tryEatSymbol("#")) {
+                const w = self.eat(.word);
+                if (std.meta.stringToEnum(Block.Type, w)) |name| {
+                    const args = self.doReplacement();
+                    var children: []const Value = &.{};
+                    while (!self.tryEatSymbol("/")) {
+                        children = children ++ &[_]Value{self.doValue()};
+                    }
+                    std.debug.assert(std.mem.eql(u8, @tagName(name), self.eat(.word)));
+                    self.eatSymbol("/");
+                    return Value{ .block = Block{
+                        .name = name,
+                        .args = args,
+                        .body = children,
+                    } };
+                }
+                return Value{ .function = .{
+                    .name = w,
+                    .args = self.doReplacement(),
+                } };
+            }
             return Value{ .replacement = self.doReplacement() };
         }
         return Value{ .element = self.doElement() };

@@ -29,7 +29,7 @@ const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
 
 pub fn parse(comptime input: []const u8) astgen.Value {
-    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}' })) };
+    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/' })) };
 }
 
 pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
@@ -82,6 +82,23 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usiz
                 try do(writer, astgen.Value{ .replacement = v[1..] }, x, indent, flag1);
             }
         },
+        .block => |v| {
+            const x = comptime search(data, v.args);
+
+            switch (v.name) {
+                .each => {
+                    inline for (x) |item| {
+                        inline for (v.body) |val| {
+                            try do(writer, val, item, indent, flag1);
+                        }
+                    }
+                },
+            }
+        },
         else => unreachable,
     }
+}
+
+fn search(comptime T: anytype, comptime args: []const []const u8) @TypeOf(if (args.len == 1) @field(T, args[0]) else search(@TypeOf(@field(T, args[0])), args[1..])) {
+    return if (args.len == 1) @field(T, args[0]) else search(@TypeOf(@field(T, args[0])), args[1..]);
 }
