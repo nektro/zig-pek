@@ -32,7 +32,11 @@ pub fn parse(comptime input: []const u8) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}' })) };
 }
 
-pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usize, flag1: bool) anyerror!void {
+pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
+    return try do(writer, value, data, 0, false);
+}
+
+fn do(writer: anytype, comptime value: astgen.Value, data: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (value) {
         .element => |v| {
             const hastext = for (v.children) |x| {

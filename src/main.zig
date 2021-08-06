@@ -29,6 +29,6 @@ pub fn main() !void {
             .flower = "Sunflower",
         },
     };
-    try pek.compile(std.io.getStdErr().writer(), doc, data, 0, false);
+    try pek.compile(std.io.getStdErr().writer(), doc, data);
     std.debug.print("\n", .{});
 }
