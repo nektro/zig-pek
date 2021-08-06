@@ -66,11 +66,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
                 shouldFlush = false;
                 break :blk;
             }
-            if (std.mem.indexOf(u8, Token.skippedChars, s)) |_| {
+            if (std.mem.indexOfScalar(u8, Token.skippedChars, c)) |_| {
                 shouldFlush = true;
                 break :blk;
             }
-            if (std.mem.indexOf(u8, symbols, s)) |_| {
+            if (std.mem.indexOfScalar(u8, symbols, c)) |_| {
                 shouldFlush = true;
                 break :blk;
             }
@@ -88,11 +88,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
                     start = i;
                     end = i;
                 }
-                if (std.mem.indexOf(u8, Token.skippedChars, s)) |_| {
+                if (std.mem.indexOfScalar(u8, Token.skippedChars, c)) |_| {
                     start += 1;
                     end += 1;
                 }
-                if (std.mem.indexOf(u8, symbols, s)) |_| {
+                if (std.mem.indexOfScalar(u8, symbols, c)) |_| {
                     ret = ret ++ &[_]Token{.{ .symbol = s }};
                     start += 1;
                     end += 1;
