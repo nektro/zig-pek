@@ -27,7 +27,7 @@ const example_document =
 
 pub fn main() !void {
     const doc = comptime pek.parse(example_document);
-    try pek.compile(std.io.getStdErr().writer(), doc, .{
+    try pek.compile(std.io.getStdOut().writer(), doc, .{
         .author = "Meghan D",
         .favorite = .{
             .flower = "Sunflower",
