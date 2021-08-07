@@ -42,7 +42,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
     switch (value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
-                if (x == .string) break true;
+                if (x == .string or x == .replacement) break true;
             } else false;
 
             if (flag1) for (range(indent)) |_| try writer.writeAll("    ");
