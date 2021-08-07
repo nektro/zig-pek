@@ -33,6 +33,10 @@ pub const Block = struct {
 
     pub const Type = enum {
         each,
+        @"if",
+        ifnot,
+        ifequal,
+        ifnotequal,
     };
 };
 

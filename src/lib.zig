@@ -91,6 +91,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                         }
                     }
                 },
+                else => @compileError("pek: block: TODO " ++ @tagName(v.name)),
             }
         },
         else => unreachable,
