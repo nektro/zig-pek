@@ -33,6 +33,7 @@ pub fn parse(comptime input: []const u8) astgen.Value {
 }
 
 pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
+    try writer.writeAll("<!DOCTYPE html>\n");
     try do(writer, value, data, data, 0, false);
 }
 
