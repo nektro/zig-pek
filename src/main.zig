@@ -4,8 +4,8 @@ const pek = @import("pek");
 const example_document =
     \\html[lang="en"](
     \\    head(
+    \\        meta[charset="utf-8"]
     \\        title("Pek Example")
-    \\        meta[charset="UTF-8"]
     \\        meta[name="viewport" content="width=device-width,initial-scale=1"]
     \\    )
     \\    body(
