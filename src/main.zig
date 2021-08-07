@@ -26,9 +26,6 @@ const example_document =
 ;
 
 pub fn main() !void {
-    std.log.info("All your codebase are belong to us.", .{});
-    std.debug.print("\n", .{});
-
     const doc = comptime pek.parse(example_document);
     try pek.compile(std.io.getStdErr().writer(), doc, .{
         .author = "Meghan D",
