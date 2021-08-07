@@ -40,5 +40,4 @@ pub fn main() !void {
             .{ .name = "Phoenix", .state = .{ .code = "AZ" } },
         },
     });
-    std.debug.print("\n", .{});
 }
