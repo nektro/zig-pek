@@ -24,6 +24,7 @@
 
 const std = @import("std");
 const range = @import("range").range;
+const htmlentities = @import("htmlentities");
 
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
@@ -75,7 +76,14 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             const TO = @TypeOf(x);
 
             if (comptime std.meta.trait.isZigString(TO)) {
-                try writer.print("{s}", .{x});
+                const s: []const u8 = x;
+                for (s) |c| {
+                    if (entityLookupBefore(&[_]u8{c})) |ent| {
+                        try writer.writeAll(ent.entity);
+                    } else {
+                        try writer.writeAll(&[_]u8{c});
+                    }
+                }
                 return;
             }
             @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
@@ -100,4 +108,16 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
 
 fn search(comptime T: anytype, comptime args: []const []const u8) @TypeOf(if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..])) {
     return if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..]);
+}
+
+fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
+    for (htmlentities.ENTITIES) |e| {
+        if (!std.mem.endsWith(u8, e.entity, ";")) {
+            continue;
+        }
+        if (std.mem.eql(u8, e.characters, in)) {
+            return e;
+        }
+    }
+    return null;
 }

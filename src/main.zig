@@ -21,6 +21,7 @@ const example_document =
     \\            li({this.name}", "{this.state.code})
     \\            /each/
     \\        )
+    \\        p("Spooky text: "{spooky})
     \\    )
     \\)
 ;
@@ -39,5 +40,6 @@ pub fn main() !void {
             .{ .name = "Houston", .state = .{ .code = "TX" } },
             .{ .name = "Phoenix", .state = .{ .code = "AZ" } },
         },
+        .spooky = "<strong>I better not be in bold.</strong>",
     });
 }
