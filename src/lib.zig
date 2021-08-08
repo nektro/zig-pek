@@ -127,7 +127,16 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                         }
                     }
                 },
-                else => @compileError("pek: block: TODO " ++ @tagName(v.name)),
+                .ifnotequal => {
+                    comptime assertEqual(v.args.len, 2);
+                    const x = comptime search(data, v.args[0]);
+                    const y = comptime search(data, v.args[1]);
+                    if (x != y) {
+                        inline for (v.body) |val| {
+                            try do(writer, val, data, ctx, indent, flag1);
+                        }
+                    }
+                },
             }
         },
         else => unreachable,

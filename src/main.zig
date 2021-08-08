@@ -35,6 +35,10 @@ const example_document =
     \\        {#ifequal top_cities.len best_rating}
     \\        p("#3")
     \\        /ifequal/
+    \\
+    \\        {#ifnotequal favorite.color sky}
+    \\        p("#4")
+    \\        /ifnotequal/
     \\    )
     \\)
 ;
