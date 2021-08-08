@@ -27,6 +27,10 @@ const example_document =
     \\        {#if am_i_a_girl}
     \\        p("#1")
     \\        /if/
+    \\
+    \\        {#ifnot is_it_my_birthday}
+    \\        p("#2")
+    \\        /ifnot/
     \\    )
     \\)
 ;
