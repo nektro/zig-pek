@@ -7,6 +7,7 @@ const example_document =
     \\        meta[charset="utf-8"]
     \\        title("Pek Example")
     \\        meta[name="viewport" content="width=device-width,initial-scale=1"]
+    \\        meta[http-equiv="X-UA-Compatible" content="IE=edge"]
     \\    )
     \\    body(
     \\        h1("Pek Example")
@@ -22,6 +23,22 @@ const example_document =
     \\            /each/
     \\        )
     \\        p("Spooky text: "{spooky})
+    \\
+    // \\        {#if am_i_a_girl}
+    // \\        p("#1")
+    // \\        /if/
+    // \\
+    // \\        {#ifnot is_it_my_birthday}
+    // \\        p("#2")
+    // \\        /ifnot/
+    // \\
+    // \\        {#ifequal top_cities.len best_rating}
+    // \\        p("#3")
+    // \\        /ifequal/
+    // \\
+    // \\        {#ifnotequal favorite.color sky}
+    // \\        p("#4")
+    // \\        /ifnotequal/
     \\    )
     \\)
 ;
@@ -32,6 +49,8 @@ pub fn main() !void {
         .author = "Meghan D",
         .favorite = .{
             .flower = "Sunflower",
+            .program_lang = "Zig",
+            .color = "Pink",
         },
         .top_cities = .{
             .{ .name = "New York", .state = .{ .code = "NY" } },
@@ -41,5 +60,9 @@ pub fn main() !void {
             .{ .name = "Phoenix", .state = .{ .code = "AZ" } },
         },
         .spooky = "<strong>I better not be in bold.</strong>",
+        .am_i_a_girl = true,
+        .sky = "Blue",
+        .best_rating = 5,
+        .is_it_my_birthday = false,
     });
 }
