@@ -24,21 +24,6 @@ const example_document =
     \\        )
     \\        p("Spooky text: "{spooky})
     \\
-    // \\        {#if am_i_a_girl}
-    // \\        p("#1")
-    // \\        /if/
-    // \\
-    // \\        {#ifnot is_it_my_birthday}
-    // \\        p("#2")
-    // \\        /ifnot/
-    // \\
-    // \\        {#ifequal top_cities.len best_rating}
-    // \\        p("#3")
-    // \\        /ifequal/
-    // \\
-    // \\        {#ifnotequal favorite.color sky}
-    // \\        p("#4")
-    // \\        /ifnotequal/
     \\    )
     \\)
 ;
