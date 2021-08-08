@@ -89,10 +89,10 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
         },
         .block => |v| {
-            const x = comptime search(data, v.args);
-
             switch (v.name) {
                 .each => {
+                    comptime assertEqual(v.args.len, 1);
+                    const x = comptime search(data, v.args[0]);
                     inline for (x) |item| {
                         inline for (v.body) |val| {
                             try do(writer, val, item, ctx, indent, flag1);
@@ -120,4 +120,8 @@ fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
         }
     }
     return null;
+}
+
+fn assertEqual(comptime a: usize, comptime b: usize) void {
+    if (a != b) @compileError(std.fmt.comptimePrint("{d} != {d}", .{ a, b }));
 }

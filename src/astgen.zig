@@ -28,7 +28,7 @@ pub const Attr = struct {
 
 pub const Block = struct {
     name: Type,
-    args: []const string,
+    args: []const []const string,
     body: []const Value,
 
     pub const Type = enum {
@@ -42,7 +42,7 @@ pub const Block = struct {
 
 pub const Fn = struct {
     name: string,
-    args: []const string,
+    args: []const []const string,
 };
 
 //
@@ -131,7 +131,7 @@ const Parser = struct {
             if (self.tryEatSymbol("#")) {
                 const w = self.eat(.word);
                 if (std.meta.stringToEnum(Block.Type, w)) |name| {
-                    const args = self.doReplacement();
+                    const args = self.doArgs();
                     var children: []const Value = &.{};
                     while (!self.tryEatSymbol("/")) {
                         children = children ++ &[_]Value{self.doValue()};
@@ -146,12 +146,27 @@ const Parser = struct {
                 }
                 return Value{ .function = .{
                     .name = w,
-                    .args = self.doReplacement(),
+                    .args = self.doArgs(),
                 } };
             }
             return Value{ .replacement = self.doReplacement() };
         }
         return Value{ .element = self.doElement() };
+    }
+
+    pub fn doArgs(comptime self: *Parser) []const []const string {
+        var ret: []const []const string = &.{};
+        var temp: []const string = &.{self.eat(.word)};
+        while (!self.tryEatSymbol("}")) {
+            if (self.tryEatSymbol(".")) {
+                temp = temp ++ &[_]string{self.eat(.word)};
+            } else {
+                ret = ret ++ &[_][]const string{temp};
+                temp = &.{self.eat(.word)};
+            }
+        }
+        ret = ret ++ &[_][]const string{temp};
+        return ret;
     }
 
     pub fn doReplacement(comptime self: *Parser) []const string {
