@@ -31,6 +31,10 @@ const example_document =
     \\        {#ifnot is_it_my_birthday}
     \\        p("#2")
     \\        /ifnot/
+    \\
+    \\        {#ifequal top_cities.len best_rating}
+    \\        p("#3")
+    \\        /ifequal/
     \\    )
     \\)
 ;
