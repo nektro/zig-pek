@@ -24,6 +24,9 @@ const example_document =
     \\        )
     \\        p("Spooky text: "{spooky})
     \\
+    \\        {#if am_i_a_girl}
+    \\        p("#1")
+    \\        /if/
     \\    )
     \\)
 ;

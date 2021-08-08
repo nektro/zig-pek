@@ -99,6 +99,15 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                         }
                     }
                 },
+                .@"if" => {
+                    comptime assertEqual(v.args.len, 1);
+                    const x = comptime search(data, v.args[0]);
+                    if (x) {
+                        inline for (v.body) |val| {
+                            try do(writer, val, data, ctx, indent, flag1);
+                        }
+                    }
+                },
                 else => @compileError("pek: block: TODO " ++ @tagName(v.name)),
             }
         },
