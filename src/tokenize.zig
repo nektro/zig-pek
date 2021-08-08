@@ -25,7 +25,7 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
     var end = 0;
     var mode = 0;
 
-    @setEvalBranchQuota(10001000);
+    @setEvalBranchQuota(100000);
 
     inline for (input) |c, i| {
         const s = &[_]u8{c};
