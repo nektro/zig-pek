@@ -31,6 +31,7 @@ pub const Block = struct {
     name: Type,
     args: []const []const string,
     body: []const Value,
+    bttm: []const Value,
 
     pub const Type = enum {
         each,
@@ -134,8 +135,19 @@ const Parser = struct {
                 if (std.meta.stringToEnum(Block.Type, w)) |name| {
                     const args = self.doArgs();
                     var children: []const Value = &.{};
+                    var bottom: []const Value = &.{};
+                    var top = true;
                     while (!self.tryEatSymbol("/")) {
-                        children = children ++ &[_]Value{self.doValue()};
+                        if (self.tryEatSymbol("<")) {
+                            std.debug.assert(std.mem.eql(u8, "else", self.eat(.word)));
+                            self.eatSymbol(">");
+                            top = false;
+                        }
+                        if (top) {
+                            children = children ++ &[_]Value{self.doValue()};
+                        } else {
+                            bottom = bottom ++ &[_]Value{self.doValue()};
+                        }
                     }
                     std.debug.assert(std.mem.eql(u8, @tagName(name), self.eat(.word)));
                     self.eatSymbol("/");
@@ -143,6 +155,7 @@ const Parser = struct {
                         .name = name,
                         .args = args,
                         .body = children,
+                        .bttm = bottom,
                     } };
                 }
                 return Value{ .function = .{

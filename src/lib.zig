@@ -14,7 +14,7 @@ const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
 
 pub fn parse(comptime input: []const u8) astgen.Value {
-    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.' })) };
+    return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
 }
 
 pub fn compile(writer: anytype, comptime value: astgen.Value, data: anytype) !void {
@@ -83,20 +83,22 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) try do(writer, body, data, ctx, indent, flag1),
-                        .Optional => if (x) |_| try do(writer, body, data, ctx, indent, flag1),
+                    const content = switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) v.body else v.bttm,
+                        .Optional => if (x) |_| v.body else v.bttm,
                         else => unreachable,
-                    }
+                    };
+                    try do(writer, body, content, ctx, indent, flag1);
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) {} else try do(writer, body, data, ctx, indent, flag1),
-                        .Optional => if (x) |_| {} else try do(writer, body, data, ctx, indent, flag1),
+                    const content = switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) v.bttm else v.body,
+                        .Optional => if (x) |_| v.bttm else v.body,
                         else => unreachable,
-                    }
+                    };
+                    try do(writer, body, content, ctx, indent, flag1);
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
