@@ -83,12 +83,20 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    if (x) try do(writer, body, data, ctx, indent, flag1);
+                    switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) try do(writer, body, data, ctx, indent, flag1),
+                        .Optional => if (x) |_| try do(writer, body, data, ctx, indent, flag1),
+                        else => unreachable,
+                    }
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    if (!x) try do(writer, body, data, ctx, indent, flag1);
+                    switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) {} else try do(writer, body, data, ctx, indent, flag1),
+                        .Optional => if (x) |_| {} else try do(writer, body, data, ctx, indent, flag1),
+                        else => unreachable,
+                    }
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
