@@ -73,54 +73,40 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
         },
         .block => |v| {
+            const body = astgen.Value{ .body = v.body };
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    inline for (x) |item| {
-                        inline for (v.body) |val| {
-                            try do(writer, val, item, ctx, indent, flag1);
-                        }
-                    }
+                    inline for (x) |item| try do(writer, body, item, ctx, indent, flag1);
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    if (x) {
-                        inline for (v.body) |val| {
-                            try do(writer, val, data, ctx, indent, flag1);
-                        }
-                    }
+                    if (x) try do(writer, body, data, ctx, indent, flag1);
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    if (!x) {
-                        inline for (v.body) |val| {
-                            try do(writer, val, data, ctx, indent, flag1);
-                        }
-                    }
+                    if (!x) try do(writer, body, data, ctx, indent, flag1);
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
                     const x = search(v.args[0], data);
                     const y = search(v.args[1], data);
-                    if (x == y) {
-                        inline for (v.body) |val| {
-                            try do(writer, val, data, ctx, indent, flag1);
-                        }
-                    }
+                    if (x == y) try do(writer, body, data, ctx, indent, flag1);
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const x = search(v.args[0], data);
                     const y = search(v.args[1], data);
-                    if (x != y) {
-                        inline for (v.body) |val| {
-                            try do(writer, val, data, ctx, indent, flag1);
-                        }
-                    }
+                    if (x != y) try do(writer, body, data, ctx, indent, flag1);
                 },
+            }
+        },
+        .body => |v| {
+            inline for (v) |val| {
+                try do(writer, val, data, ctx, indent, flag1);
             }
         },
         else => unreachable,

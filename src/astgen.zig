@@ -12,6 +12,7 @@ pub const Value = union(enum) {
     string: string,
     replacement: []const string,
     block: Block,
+    body: []const Value,
     function: Fn,
 };
 
