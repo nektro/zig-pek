@@ -44,9 +44,10 @@ const example_document =
 ;
 
 pub fn main() !void {
+    var name: []const u8 = "Meghan D";
     const doc = comptime pek.parse(example_document);
     try pek.compile(std.io.getStdOut().writer(), doc, .{
-        .author = "Meghan D",
+        .author = name,
         .favorite = .{
             .flower = "Sunflower",
             .program_lang = "Zig",
@@ -62,7 +63,7 @@ pub fn main() !void {
         .spooky = "<strong>I better not be in bold.</strong>",
         .am_i_a_girl = true,
         .sky = "Blue",
-        .best_rating = 5,
+        .best_rating = @as(usize, 5),
         .is_it_my_birthday = false,
     });
 }
