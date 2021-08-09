@@ -56,7 +56,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             try writer.writeAll(v[1 .. v.len - 1]);
         },
         .replacement => |v| {
-            const x = if (comptime std.mem.eql(u8, v[0], "this")) search(data, v[1..]) else search(ctx, v);
+            const x = if (comptime std.mem.eql(u8, v[0], "this")) search(v[1..], data) else search(v, ctx);
             const TO = @TypeOf(x);
 
             if (comptime std.meta.trait.isZigString(TO)) {
@@ -76,7 +76,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = comptime search(data, v.args[0]);
+                    const x = search(v.args[0], data);
                     inline for (x) |item| {
                         inline for (v.body) |val| {
                             try do(writer, val, item, ctx, indent, flag1);
@@ -85,7 +85,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = comptime search(data, v.args[0]);
+                    const x = search(v.args[0], data);
                     if (x) {
                         inline for (v.body) |val| {
                             try do(writer, val, data, ctx, indent, flag1);
@@ -94,7 +94,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = comptime search(data, v.args[0]);
+                    const x = search(v.args[0], data);
                     if (!x) {
                         inline for (v.body) |val| {
                             try do(writer, val, data, ctx, indent, flag1);
@@ -103,8 +103,8 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const x = comptime search(data, v.args[0]);
-                    const y = comptime search(data, v.args[1]);
+                    const x = search(v.args[0], data);
+                    const y = search(v.args[1], data);
                     if (x == y) {
                         inline for (v.body) |val| {
                             try do(writer, val, data, ctx, indent, flag1);
@@ -113,8 +113,8 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const x = comptime search(data, v.args[0]);
-                    const y = comptime search(data, v.args[1]);
+                    const x = search(v.args[0], data);
+                    const y = search(v.args[1], data);
                     if (x != y) {
                         inline for (v.body) |val| {
                             try do(writer, val, data, ctx, indent, flag1);
@@ -127,8 +127,25 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
     }
 }
 
-fn search(comptime T: anytype, comptime args: []const []const u8) @TypeOf(if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..])) {
-    return if (args.len == 1) @field(T, args[0]) else search(@field(T, args[0]), args[1..]);
+fn search(comptime args: []const []const u8, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
+    const f = @field(ctx, args[0]);
+    if (args.len == 1) return f;
+    return search(args[1..], f);
+}
+
+fn FieldSearch(comptime T: type, comptime args: []const []const u8) type {
+    return if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
+}
+
+fn Field(comptime T: type, comptime field_name: []const u8) type {
+    inline for (std.meta.fields(T)) |fld| {
+        if (std.mem.eql(u8, fld.name, field_name)) return fld.field_type;
+    }
+    if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
+        return usize;
+    }
+    @compileLog(field_name);
+    @compileLog(std.meta.fieldNames(T));
 }
 
 fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
