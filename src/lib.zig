@@ -6,22 +6,6 @@
 //! Loosely inspired by Pug
 //!     https://pugjs.org/api/getting-started.html
 
-// // document.corgi
-// doctype html
-// html[lang="en"](
-//     head(
-//         title("Corgi Example")
-//         meta[charset="UTF-8"]
-//         meta[name="viewport",content="width=device-width,initial-scale=1"]
-//     )
-//     body(
-//         h1("Corgi Example")
-//         hr
-//         p("This is an example HTML document written in "a[href="https://github.com/corgi-lang/corgi"]("Corgi")".")
-//         p("Follow Nektro on Twitter @Nektro")
-//     )
-// )
-
 const std = @import("std");
 const range = @import("range").range;
 const htmlentities = @import("htmlentities");
