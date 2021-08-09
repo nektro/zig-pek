@@ -74,6 +74,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
         },
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
+            const bottom = astgen.Value{ .body = v.bttm };
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
@@ -83,22 +84,36 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    const content = switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) v.body else v.bttm,
-                        .Optional => if (x) |_| v.body else v.bttm,
+                    switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) {
+                            try do(writer, body, data, ctx, indent, flag1);
+                        } else {
+                            try do(writer, bottom, data, ctx, indent, flag1);
+                        },
+                        .Optional => if (x) |_| {
+                            try do(writer, body, data, ctx, indent, flag1);
+                        } else {
+                            try do(writer, bottom, data, ctx, indent, flag1);
+                        },
                         else => unreachable,
-                    };
-                    try do(writer, body, content, ctx, indent, flag1);
+                    }
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    const content = switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) v.bttm else v.body,
-                        .Optional => if (x) |_| v.bttm else v.body,
+                    switch (@typeInfo(@TypeOf(x))) {
+                        .Bool => if (x) {
+                            try do(writer, bottom, data, ctx, indent, flag1);
+                        } else {
+                            try do(writer, body, data, ctx, indent, flag1);
+                        },
+                        .Optional => if (x) |_| {
+                            try do(writer, bottom, data, ctx, indent, flag1);
+                        } else {
+                            try do(writer, body, data, ctx, indent, flag1);
+                        },
                         else => unreachable,
-                    };
-                    try do(writer, body, content, ctx, indent, flag1);
+                    }
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
