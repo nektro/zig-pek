@@ -34,8 +34,15 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             try writer.writeAll("<");
             try writer.writeAll(v.name);
 
-            for (v.attrs) |it| {
-                try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value[1 .. it.value.len - 1]) });
+            inline for (v.attrs) |it| {
+                switch (comptime it.value) {
+                    .string => try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value.string[1 .. it.value.string.len - 1]) }),
+                    .body => {
+                        try writer.print(" {s}=\"", .{it.key});
+                        try do(alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, indent, flag1);
+                        try writer.print("\"", .{});
+                    },
+                }
             }
 
             if (v.children.len == 0) {

@@ -19,12 +19,12 @@ pub const Value = union(enum) {
 pub const Element = struct {
     name: string,
     attrs: []const Attr,
-    children: []const Value,
+    children: Body,
 };
 
 pub const Attr = struct {
     key: string,
-    value: string,
+    value: union(enum) { string: string, body: Body },
 };
 
 pub const Block = struct {
@@ -103,10 +103,17 @@ const Parser = struct {
     pub fn doAttr(comptime self: *Parser) Attr {
         const k = self.eat(.word);
         self.eatSymbol("=");
+        const body = self.doChildren();
+        if (body.len > 0) {
+            return Attr{
+                .key = k,
+                .value = .{ .body = body },
+            };
+        }
         const v = self.eat(.string);
         return Attr{
             .key = k,
-            .value = v,
+            .value = .{ .string = v },
         };
     }
 
