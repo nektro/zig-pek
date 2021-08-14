@@ -12,7 +12,7 @@ pub const Value = union(enum) {
     string: string,
     replacement: []const string,
     block: Block,
-    body: []const Value,
+    body: Body,
     function: Fn,
 };
 
@@ -30,8 +30,8 @@ pub const Attr = struct {
 pub const Block = struct {
     name: Type,
     args: []const []const string,
-    body: []const Value,
-    bttm: []const Value,
+    body: Body,
+    bttm: Body,
 
     pub const Type = enum {
         each,
@@ -41,6 +41,8 @@ pub const Block = struct {
         ifnotequal,
     };
 };
+
+pub const Body = []const Value;
 
 pub const Fn = struct {
     name: string,
