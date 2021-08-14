@@ -94,16 +94,8 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
                     switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) {
-                            try do(writer, body, data, ctx, indent, flag1);
-                        } else {
-                            try do(writer, bottom, data, ctx, indent, flag1);
-                        },
-                        .Optional => if (x) |_| {
-                            try do(writer, body, data, ctx, indent, flag1);
-                        } else {
-                            try do(writer, bottom, data, ctx, indent, flag1);
-                        },
+                        .Bool => try doif(writer, body, bottom, data, ctx, indent, flag1, x, true),
+                        .Optional => try docap(writer, body, bottom, data, ctx, indent, flag1, x, true),
                         else => unreachable,
                     }
                 },
@@ -111,16 +103,8 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
                     switch (@typeInfo(@TypeOf(x))) {
-                        .Bool => if (x) {
-                            try do(writer, bottom, data, ctx, indent, flag1);
-                        } else {
-                            try do(writer, body, data, ctx, indent, flag1);
-                        },
-                        .Optional => if (x) |_| {
-                            try do(writer, bottom, data, ctx, indent, flag1);
-                        } else {
-                            try do(writer, body, data, ctx, indent, flag1);
-                        },
+                        .Bool => try doif(writer, body, bottom, data, ctx, indent, flag1, x, false),
+                        .Optional => try docap(writer, body, bottom, data, ctx, indent, flag1, x, false),
                         else => unreachable,
                     }
                 },
@@ -208,4 +192,20 @@ fn contains(haystack: []const []const u8, needle: []const u8) bool {
         }
     }
     return false;
+}
+
+fn doif(writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool, flag3: bool) anyerror!void {
+    if (flag2 == flag3) {
+        try do(writer, top, data, ctx, indent, flag1);
+    } else {
+        try do(writer, bottom, data, ctx, indent, flag1);
+    }
+}
+
+fn docap(writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool, flag3: bool) anyerror!void {
+    if (flag2 == flag3) {
+        try do(writer, top, data, ctx, indent, flag1);
+    } else {
+        try do(writer, bottom, data, ctx, indent, flag1);
+    }
 }
