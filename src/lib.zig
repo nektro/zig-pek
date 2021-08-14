@@ -88,7 +88,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 .each => {
                     comptime assertEqual(v.args.len, 1);
                     const x = search(v.args[0], data);
-                    inline for (x) |item| try do(writer, body, item, ctx, indent, flag1);
+                    for (x) |item| try do(writer, body, item, ctx, indent, flag1);
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
