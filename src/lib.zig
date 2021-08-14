@@ -239,3 +239,11 @@ fn docap(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value,
         try do(alloc, writer, bottom, data, ctx, indent, flag1);
     }
 }
+
+fn FnArgsTuple(func: anytype) type {
+    var types: []const type = &.{};
+    inline for (@typeInfo(@TypeOf(func)).Fn.args) |arg| {
+        types = types ++ &[_]type{arg.arg_type.?};
+    }
+    return std.meta.Tuple(types);
+}
