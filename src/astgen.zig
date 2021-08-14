@@ -207,7 +207,7 @@ const Parser = struct {
         const tok = self.tokens[self.index];
         const tag = std.meta.activeTag(tok.data);
         if (tag != typ) {
-            @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ tok.line, tok.pos, @tagName(tag), @tagName(typ) }));
+            @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ tok.line, tok.pos, @tagName(typ), @tagName(tag) }));
         }
         return @field(tok.data, @tagName(typ));
     }
