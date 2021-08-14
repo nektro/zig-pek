@@ -110,7 +110,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const y = search(v.args[1], data);
+                    const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (x == y) try do(writer, body, data, ctx, indent, flag1);
                 },
                 .ifnotequal => {
