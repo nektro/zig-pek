@@ -70,7 +70,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 }
                 return;
             }
-            @compileError("pek: compile: unsupported type: " ++ @typeName(TO));
+            @compileError("pek: print: unsupported type: " ++ @typeName(TO));
         },
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
