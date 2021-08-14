@@ -3,8 +3,9 @@
 //! Shortening of Pekingese
 //!     https://en.wikipedia.org/wiki/Pekingese
 //!
-//! Loosely inspired by Pug
-//!     https://pugjs.org/api/getting-started.html
+//! Loosely inspired by Pug + Handlebars
+//!     https://pugjs.org/
+//!     https://handlebarsjs.com/
 
 const std = @import("std");
 const range = @import("range").range;
