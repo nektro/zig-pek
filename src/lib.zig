@@ -164,13 +164,14 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
 }
 
 fn search(comptime args: []const []const u8, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
+    if (args.len == 0) return ctx;
     const f = @field(ctx, args[0]);
     if (args.len == 1) return f;
     return search(args[1..], f);
 }
 
 fn FieldSearch(comptime T: type, comptime args: []const []const u8) type {
-    return if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
+    return if (args.len == 0) T else if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
 }
 
 fn Field(comptime T: type, comptime field_name: []const u8) type {
