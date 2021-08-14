@@ -109,6 +109,7 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, indent, flag1, x),
+                        else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
@@ -116,6 +117,7 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
+                        else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
                 .ifequal => {
