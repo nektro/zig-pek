@@ -87,12 +87,12 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = search(v.args[0], data);
+                    const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
                     for (x) |item| try do(writer, body, item, ctx, indent, flag1);
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = search(v.args[0], data);
+                    const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
                     switch (@typeInfo(@TypeOf(x))) {
                         .Bool => try doif(writer, body, bottom, data, ctx, indent, flag1, x, true),
                         .Optional => try docap(writer, body, bottom, data, ctx, indent, flag1, x, true),
@@ -101,7 +101,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
-                    const x = search(v.args[0], data);
+                    const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
                     switch (@typeInfo(@TypeOf(x))) {
                         .Bool => try doif(writer, body, bottom, data, ctx, indent, flag1, x, false),
                         .Optional => try docap(writer, body, bottom, data, ctx, indent, flag1, x, false),
@@ -110,14 +110,14 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const x = search(v.args[0], data);
+                    const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
                     const y = search(v.args[1], data);
                     if (x == y) try do(writer, body, data, ctx, indent, flag1);
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const x = search(v.args[0], data);
-                    const y = search(v.args[1], data);
+                    const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
+                    const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (x != y) try do(writer, body, data, ctx, indent, flag1);
                 },
             }
