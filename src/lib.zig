@@ -58,6 +58,7 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
         .replacement => |v| {
             const x = if (comptime std.mem.eql(u8, v[0], "this")) search(v[1..], data) else search(v, ctx);
             const TO = @TypeOf(x);
+            const TI = @typeInfo(TO);
 
             if (comptime std.meta.trait.isZigString(TO)) {
                 const s: []const u8 = x;
@@ -68,6 +69,10 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
                         try writer.writeAll(&[_]u8{c});
                     }
                 }
+                return;
+            }
+            if (TI == .Int or TI == .Float or TI == .ComptimeInt or TI == .ComptimeFloat) {
+                try writer.print("{d}", .{x});
                 return;
             }
             @compileError("pek: print: unsupported type: " ++ @typeName(TO));
