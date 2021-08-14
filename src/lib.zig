@@ -177,8 +177,7 @@ fn Field(comptime T: type, comptime field_name: []const u8) type {
     if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
     }
-    @compileLog(field_name);
-    @compileLog(std.meta.fieldNames(T));
+    @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
 }
 
 fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
