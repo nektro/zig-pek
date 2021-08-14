@@ -9,6 +9,7 @@
 const std = @import("std");
 const range = @import("range").range;
 const htmlentities = @import("htmlentities");
+const root = @import("root");
 
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
@@ -133,6 +134,27 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
             inline for (v) |val| {
                 try do(alloc, writer, val, data, ctx, indent, flag1);
             }
+        },
+        .function => |v| {
+            if (@hasDecl(root, "pek_" ++ v.name)) {
+                const func = @field(root, "pek_" ++ v.name);
+                var args: FnArgsTuple(func) = undefined;
+                args.@"0" = alloc;
+                inline for (v.args) |arg, i| {
+                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 1});
+                    @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
+                }
+                const s: []const u8 = try @call(.{}, func, args);
+                for (s) |c| {
+                    if (entityLookupBefore(&[_]u8{c})) |ent| {
+                        try writer.writeAll(ent.entity);
+                    } else {
+                        try writer.writeAll(&[_]u8{c});
+                    }
+                }
+                return;
+            }
+            @compileError("pek: unknown custom function: " ++ v.name);
         },
         else => unreachable,
     }
