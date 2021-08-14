@@ -147,14 +147,9 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 1});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
-                const s: []const u8 = try @call(.{}, func, args);
-                for (s) |c| {
-                    if (entityLookupBefore(&[_]u8{c})) |ent| {
-                        try writer.writeAll(ent.entity);
-                    } else {
-                        try writer.writeAll(&[_]u8{c});
-                    }
-                }
+                const repvalue = astgen.Value{ .replacement = &.{"this"} };
+                const newdata = try @call(.{}, func, args);
+                try do(alloc, writer, repvalue, newdata, ctx, indent, flag1);
                 return;
             }
             @compileError("pek: unknown custom function: " ++ v.name);
