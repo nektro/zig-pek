@@ -4,12 +4,18 @@ const string = []const u8;
 //
 //
 
-pub const Token = union(enum) {
-    word: string,
-    symbol: string,
-    string: string,
+pub const Token = struct {
+    data: Data,
+    line: usize,
+    pos: usize,
 
     pub const skippedChars = &[_]u8{ ' ', '\n', '\t', '\r' };
+
+    pub const Data = union(enum) {
+        word: string,
+        symbol: string,
+        string: string,
+    };
 };
 
 //
@@ -58,7 +64,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
             }
             if (mode == 2) {
                 if (c == input[start]) {
-                    ret = ret ++ &[_]Token{.{ .string = input[start .. i + 1] }};
+                    ret = ret ++ &[_]Token{.{
+                        .data = .{ .string = input[start .. i + 1] },
+                        .line = line,
+                        .pos = pos,
+                    }};
                     start = i + 1;
                     end = i;
                     mode = 0;
@@ -84,7 +94,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
         if (shouldFlush) {
             if (mode == 0) {
                 if (end - start > 0) {
-                    ret = ret ++ &[_]Token{.{ .word = input[start..end] }};
+                    ret = ret ++ &[_]Token{.{
+                        .data = .{ .word = input[start..end] },
+                        .line = line,
+                        .pos = pos,
+                    }};
                     start = i;
                     end = i;
                 }
@@ -93,7 +107,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
                     end += 1;
                 }
                 if (std.mem.indexOfScalar(u8, symbols, c)) |_| {
-                    ret = ret ++ &[_]Token{.{ .symbol = s }};
+                    ret = ret ++ &[_]Token{.{
+                        .data = .{ .symbol = s },
+                        .line = line,
+                        .pos = pos,
+                    }};
                     start += 1;
                     end += 1;
                 }

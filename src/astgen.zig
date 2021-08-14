@@ -84,7 +84,7 @@ const Parser = struct {
     }
 
     fn tryEatSymbol(comptime self: *Parser, comptime needle: string) bool {
-        switch (self.tokens[self.index]) {
+        switch (self.tokens[self.index].data) {
             .symbol => |sym| {
                 if (std.mem.eql(u8, sym, needle)) {
                     self.index += 1;
@@ -126,7 +126,7 @@ const Parser = struct {
     }
 
     pub fn doValue(comptime self: *Parser) Value {
-        if (self.tokens[self.index] == .string) {
+        if (self.tokens[self.index].data == .string) {
             return Value{ .string = self.eat(.string) };
         }
         if (self.tryEatSymbol("{")) {
@@ -193,8 +193,13 @@ const Parser = struct {
         return ret;
     }
 
-    fn eat(comptime self: *Parser, comptime typ: std.meta.Tag(Token)) string {
+    fn eat(comptime self: *Parser, comptime typ: std.meta.Tag(Token.Data)) string {
         defer self.index += 1;
-        return @field(self.tokens[self.index], @tagName(typ));
+        const tok = self.tokens[self.index];
+        const tag = std.meta.activeTag(tok.data);
+        if (tag != typ) {
+            @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ tok.line, tok.pos, @tagName(tag), @tagName(typ) }));
+        }
+        return @field(tok.data, @tagName(typ));
     }
 };
