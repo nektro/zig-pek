@@ -39,7 +39,11 @@ fn do(writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype
             }
 
             if (v.children.len == 0) {
-                try writer.writeAll(" />\n");
+                if (contains(std.meta.fieldNames(HtmlVoidElements), v.name)) {
+                    try writer.writeAll(" />\n");
+                } else {
+                    try writer.print("></{s}>\n", .{v.name});
+                }
             } else {
                 try writer.writeAll(">");
 
@@ -178,4 +182,30 @@ fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
 
 fn assertEqual(comptime a: usize, comptime b: usize) void {
     if (a != b) @compileError(std.fmt.comptimePrint("{d} != {d}", .{ a, b }));
+}
+
+const HtmlVoidElements = enum {
+    area,
+    base,
+    br,
+    col,
+    embed,
+    hr,
+    img,
+    input,
+    link,
+    meta,
+    param,
+    source,
+    track,
+    wbr,
+};
+
+fn contains(haystack: []const []const u8, needle: []const u8) bool {
+    for (haystack) |v| {
+        if (std.mem.eql(u8, v, needle)) {
+            return true;
+        }
+    }
+    return false;
 }
