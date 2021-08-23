@@ -124,11 +124,17 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
+                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
+                        return try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
+                    }
                     try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x == y);
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
+                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
+                        return try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
+                    }
                     try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x != y);
                 },
             }
