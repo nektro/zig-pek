@@ -185,10 +185,15 @@ const Parser = struct {
                 temp = temp ++ &[_]string{self.eat(.word)};
             } else {
                 ret = ret ++ &[_][]const string{temp};
-                temp = &.{self.eat(.word)};
+                temp = &.{};
+                if (comptime self.nextIs(.string)) {
+                    ret = ret ++ &[_][]const string{&.{self.eat(.string)}};
+                } else {
+                    temp = &.{self.eat(.word)};
+                }
             }
         }
-        ret = ret ++ &[_][]const string{temp};
+        if (temp.len > 0) ret = ret ++ &[_][]const string{temp};
         return ret;
     }
 
@@ -210,5 +215,9 @@ const Parser = struct {
             @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ tok.line, tok.pos, @tagName(typ), @tagName(tag) }));
         }
         return @field(tok.data, @tagName(typ));
+    }
+
+    fn nextIs(comptime self: *Parser, comptime typ: std.meta.Tag(Token.Data)) bool {
+        return self.tokens[self.index].data == typ;
     }
 };
