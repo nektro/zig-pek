@@ -237,7 +237,7 @@ fn doif(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, 
     }
 }
 
-fn docap(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool) anyerror!void {
+fn docap(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: anytype) anyerror!void {
     if (flag2) |_| {
         try do(alloc, writer, top, data, ctx, indent, flag1);
     } else {
