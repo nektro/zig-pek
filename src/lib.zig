@@ -192,6 +192,19 @@ fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
         if (!std.mem.endsWith(u8, e.entity, ";")) {
             continue;
         }
+        if (in.len == 1) {
+            switch (in[0]) {
+                '\n',
+                '.',
+                ':',
+                '(',
+                ')',
+                '%',
+                '+',
+                => return null,
+                else => break,
+            }
+        }
         if (std.mem.eql(u8, e.characters, in)) {
             return e;
         }
