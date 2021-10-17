@@ -88,6 +88,10 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                 try writer.print("{d}", .{x});
                 return;
             }
+            if (comptime std.meta.trait.hasFn("toString")(TO)) {
+                try writer.writeAll(try x.toString(alloc));
+                return;
+            }
             @compileError("pek: print: unsupported type: " ++ @typeName(TO));
         },
         .block => |v| {
