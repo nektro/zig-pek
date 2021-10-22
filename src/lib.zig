@@ -88,6 +88,9 @@ fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, 
                 try writer.print("{d}", .{x});
                 return;
             }
+            if (comptime std.meta.trait.hasFn("format")(TO)) {
+                return std.fmt.format(writer, "{}", .{x});
+            }
             if (comptime std.meta.trait.hasFn("toString")(TO)) {
                 try writer.writeAll(try x.toString(alloc));
                 return;
