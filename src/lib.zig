@@ -19,13 +19,13 @@ pub fn parse(comptime input: []const u8) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
 }
 
-pub fn compile(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype) !void {
+pub fn compile(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype) !void {
     try writer.writeAll("<!DOCTYPE html>\n");
     try do(alloc, writer, value, data, data, 0, false);
     try writer.writeAll("\n");
 }
 
-fn do(alloc: *std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
+fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
@@ -249,7 +249,7 @@ fn contains(haystack: []const []const u8, needle: []const u8) bool {
     return false;
 }
 
-fn doif(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool) anyerror!void {
+fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool) anyerror!void {
     if (flag2) {
         try do(alloc, writer, top, data, ctx, indent, flag1);
     } else {
@@ -257,7 +257,7 @@ fn doif(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, 
     }
 }
 
-fn docap(alloc: *std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: anytype) anyerror!void {
+fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: anytype) anyerror!void {
     if (flag2) |_| {
         try do(alloc, writer, top, data, ctx, indent, flag1);
     } else {
