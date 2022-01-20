@@ -152,17 +152,23 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             }
         },
         .function => |v| {
+            var arena = std.heap.ArenaAllocator.init(alloc);
+            defer arena.deinit();
+
             if (@hasDecl(root, "pek_" ++ v.name)) {
                 const func = @field(root, "pek_" ++ v.name);
+                var list = std.ArrayList(u8).init(arena.allocator());
+                errdefer list.deinit();
                 var args: FnArgsTuple(func) = undefined;
                 args.@"0" = alloc;
+                args.@"1" = list.writer();
                 inline for (v.args) |arg, i| {
-                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 1});
+                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = &.{"this"} };
-                const newdata = try @call(.{}, func, args);
-                try do(alloc, writer, repvalue, newdata, ctx, indent, flag1);
+                try @call(.{}, func, args);
+                try do(alloc, writer, repvalue, list.toOwnedSlice(), ctx, indent, flag1);
                 return;
             }
             @compileError("pek: unknown custom function: " ++ v.name);
