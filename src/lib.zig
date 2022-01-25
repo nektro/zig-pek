@@ -19,13 +19,13 @@ pub fn parse(comptime input: []const u8) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
 }
 
-pub fn compile(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype) !void {
+pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype) !void {
     try writer.writeAll("<!DOCTYPE html>\n");
-    try do(alloc, writer, value, data, data, 0, false);
+    try do(Ctx, alloc, writer, value, data, data, 0, false);
     try writer.writeAll("\n");
 }
 
-fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
+fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
@@ -41,7 +41,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     .string => try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value.string[1 .. it.value.string.len - 1]) }),
                     .body => {
                         try writer.print(" {s}=\"", .{it.key});
-                        try do(alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, indent, flag1);
+                        try do(Ctx, alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, indent, flag1);
                         try writer.print("\"", .{});
                     },
                 }
@@ -58,7 +58,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
 
                 if (!hastext) try writer.writeAll("\n");
                 inline for (v.children) |it| {
-                    try do(alloc, writer, it, data, ctx, indent + 1, !hastext);
+                    try do(Ctx, alloc, writer, it, data, ctx, indent + 1, !hastext);
                 }
                 if (!hastext) for (range(indent)) |_| try writer.writeAll("    ");
                 try writer.print("</{s}>", .{v.name});
@@ -106,25 +106,25 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
-                    for (x) |item| try do(alloc, writer, body, item, ctx, indent, flag1);
+                    for (x) |item| try do(Ctx, alloc, writer, body, item, ctx, indent, flag1);
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     if (comptime std.meta.trait.isIndexable(T)) {
-                        try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x.len > 0);
+                        try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x.len > 0);
                         return;
                     }
                     switch (comptime TI) {
-                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x),
-                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, indent, flag1, x),
+                        .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x),
+                        .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x),
                         else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     switch (comptime TI) {
-                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
-                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
+                        .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
+                        .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
                         else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
@@ -132,31 +132,31 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
-                        return try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
+                        return try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
                     }
-                    try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x == y);
+                    try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x == y);
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
-                        return try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
+                        return try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, std.mem.eql(u8, @tagName(x), y));
                     }
-                    try doif(alloc, writer, body, bottom, data, ctx, indent, flag1, x != y);
+                    try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x != y);
                 },
             }
         },
         .body => |v| {
             inline for (v) |val| {
-                try do(alloc, writer, val, data, ctx, indent, flag1);
+                try do(Ctx, alloc, writer, val, data, ctx, indent, flag1);
             }
         },
         .function => |v| {
             var arena = std.heap.ArenaAllocator.init(alloc);
             defer arena.deinit();
 
-            if (@hasDecl(root, "pek_" ++ v.name)) {
-                const func = @field(root, "pek_" ++ v.name);
+            if (@hasDecl(Ctx, "pek_" ++ v.name)) {
+                const func = @field(Ctx, "pek_" ++ v.name);
                 var list = std.ArrayList(u8).init(arena.allocator());
                 errdefer list.deinit();
                 var args: FnArgsTuple(func) = undefined;
@@ -168,7 +168,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 }
                 const repvalue = astgen.Value{ .replacement = &.{"this"} };
                 try @call(.{}, func, args);
-                try do(alloc, writer, repvalue, list.toOwnedSlice(), ctx, indent, flag1);
+                try do(Ctx, alloc, writer, repvalue, list.toOwnedSlice(), ctx, indent, flag1);
                 return;
             }
             @compileError("pek: unknown custom function: " ++ v.name);
@@ -255,19 +255,19 @@ fn contains(haystack: []const []const u8, needle: []const u8) bool {
     return false;
 }
 
-fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool) anyerror!void {
+fn doif(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: bool) anyerror!void {
     if (flag2) {
-        try do(alloc, writer, top, data, ctx, indent, flag1);
+        try do(Ctx, alloc, writer, top, data, ctx, indent, flag1);
     } else {
-        try do(alloc, writer, bottom, data, ctx, indent, flag1);
+        try do(Ctx, alloc, writer, bottom, data, ctx, indent, flag1);
     }
 }
 
-fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: anytype) anyerror!void {
+fn docap(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool, flag2: anytype) anyerror!void {
     if (flag2) |_| {
-        try do(alloc, writer, top, data, ctx, indent, flag1);
+        try do(Ctx, alloc, writer, top, data, ctx, indent, flag1);
     } else {
-        try do(alloc, writer, bottom, data, ctx, indent, flag1);
+        try do(Ctx, alloc, writer, bottom, data, ctx, indent, flag1);
     }
 }
 
