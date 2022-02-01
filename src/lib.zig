@@ -29,7 +29,10 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
     switch (comptime value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
-                if (x == .string or x == .replacement) break true;
+                switch (x) {
+                    .string, .replacement, .function => break true,
+                    .element, .attr, .block, .body => {},
+                }
             } else false;
 
             if (flag1) for (range(indent)) |_| try writer.writeAll("    ");
