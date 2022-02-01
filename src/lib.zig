@@ -162,7 +162,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                 const func = @field(Ctx, "pek_" ++ v.name);
                 var list = std.ArrayList(u8).init(arena.allocator());
                 errdefer list.deinit();
-                var args: FnArgsTuple(func) = undefined;
+                var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
                 args.@"0" = alloc;
                 args.@"1" = list.writer();
                 inline for (v.args) |arg, i| {
@@ -272,12 +272,4 @@ fn docap(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime
     } else {
         try do(Ctx, alloc, writer, bottom, data, ctx, indent, flag1);
     }
-}
-
-fn FnArgsTuple(func: anytype) type {
-    var types: []const type = &.{};
-    inline for (@typeInfo(@TypeOf(func)).Fn.args) |arg| {
-        types = types ++ &[_]type{arg.arg_type.?};
-    }
-    return std.meta.Tuple(types);
 }
