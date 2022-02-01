@@ -194,11 +194,11 @@ fn FieldSearch(comptime T: type, comptime args: []const []const u8) type {
 }
 
 fn Field(comptime T: type, comptime field_name: []const u8) type {
-    inline for (std.meta.fields(T)) |fld| {
-        if (std.mem.eql(u8, fld.name, field_name)) return fld.field_type;
-    }
     if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
+    }
+    inline for (std.meta.fields(T)) |fld| {
+        if (std.mem.eql(u8, fld.name, field_name)) return fld.field_type;
     }
     @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
 }
