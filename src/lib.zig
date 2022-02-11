@@ -8,6 +8,7 @@
 //!     https://handlebarsjs.com/
 
 const std = @import("std");
+const string = []const u8;
 const range = @import("range").range;
 const htmlentities = @import("htmlentities");
 const root = @import("root");
@@ -15,7 +16,7 @@ const root = @import("root");
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
 
-pub fn parse(comptime input: []const u8) astgen.Value {
+pub fn parse(comptime input: string) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
 }
 
@@ -180,7 +181,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
     }
 }
 
-fn search(comptime args: []const []const u8, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
+fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
     if (args.len == 0) return ctx;
     if (args[0][0] == '"') return std.mem.trim(u8, args[0], "\"");
     const f = @field(ctx, args[0]);
@@ -188,12 +189,12 @@ fn search(comptime args: []const []const u8, ctx: anytype) FieldSearch(@TypeOf(c
     return search(args[1..], f);
 }
 
-fn FieldSearch(comptime T: type, comptime args: []const []const u8) type {
-    if (args.len > 0 and args[0][0] == '"') return []const u8;
+fn FieldSearch(comptime T: type, comptime args: []const string) type {
+    if (args.len > 0 and args[0][0] == '"') return string;
     return if (args.len == 0) T else if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
 }
 
-fn Field(comptime T: type, comptime field_name: []const u8) type {
+fn Field(comptime T: type, comptime field_name: string) type {
     if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
     }
@@ -203,7 +204,7 @@ fn Field(comptime T: type, comptime field_name: []const u8) type {
     @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
 }
 
-fn entityLookupBefore(in: []const u8) ?htmlentities.Entity {
+fn entityLookupBefore(in: string) ?htmlentities.Entity {
     for (htmlentities.ENTITIES) |e| {
         if (!std.mem.endsWith(u8, e.entity, ";")) {
             continue;
@@ -249,7 +250,7 @@ const HtmlVoidElements = enum {
     wbr,
 };
 
-fn contains(haystack: []const []const u8, needle: []const u8) bool {
+fn contains(haystack: []const string, needle: string) bool {
     for (haystack) |v| {
         if (std.mem.eql(u8, v, needle)) {
             return true;
