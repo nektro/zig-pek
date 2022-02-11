@@ -72,13 +72,18 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
         .string => |v| {
             try writer.writeAll(v[1 .. v.len - 1]);
         },
-        .replacement => |v| {
+        .replacement => |repl| {
+            const v = repl.arms;
             const x = if (comptime std.mem.eql(u8, v[0], "this")) search(v[1..], data) else search(v, ctx);
             const TO = @TypeOf(x);
             const TI = @typeInfo(TO);
 
             if (comptime std.meta.trait.isZigString(TO)) {
-                const s: []const u8 = x;
+                if (repl.raw) {
+                    try writer.writeAll(x);
+                    return;
+                }
+                const s: string = x;
                 for (s) |c| {
                     if (entityLookupBefore(&[_]u8{c})) |ent| {
                         try writer.writeAll(ent.entity);
@@ -170,7 +175,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
-                const repvalue = astgen.Value{ .replacement = &.{"this"} };
+                const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"} } };
                 try @call(.{}, func, args);
                 try do(Ctx, alloc, writer, repvalue, list.toOwnedSlice(), ctx, indent, flag1);
                 return;

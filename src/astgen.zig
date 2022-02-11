@@ -10,7 +10,7 @@ pub const Value = union(enum) {
     element: Element,
     attr: Attr,
     string: string,
-    replacement: []const string,
+    replacement: Replacement,
     block: Block,
     body: Body,
     function: Fn,
@@ -25,6 +25,11 @@ pub const Element = struct {
 pub const Attr = struct {
     key: string,
     value: union(enum) { string: string, body: Body },
+};
+
+pub const Replacement = struct {
+    arms: []const string,
+    raw: bool = false,
 };
 
 pub const Block = struct {
@@ -172,7 +177,11 @@ const Parser = struct {
                     .args = self.doArgs(),
                 } };
             }
-            return Value{ .replacement = self.doReplacement() };
+            if (self.tryEatSymbol("{")) {
+                defer self.eatSymbol("}");
+                return Value{ .replacement = .{ .arms = self.doReplacement(), .raw = true } };
+            }
+            return Value{ .replacement = .{ .arms = self.doReplacement() } };
         }
         return Value{ .element = self.doElement() };
     }
