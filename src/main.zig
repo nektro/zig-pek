@@ -43,17 +43,27 @@ const example_document =
     \\)
 ;
 
+const S = struct {
+    name: []const u8,
+    state: struct {
+        code: []const u8,
+    },
+};
+
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const alloc = gpa.allocator();
+
     var name: []const u8 = "Meghan D";
     const doc = comptime pek.parse(example_document);
-    try pek.compile(std.io.getStdOut().writer(), doc, .{
+    try pek.compile(@This(), alloc, std.io.getStdOut().writer(), doc, .{
         .author = name,
         .favorite = .{
             .flower = "Sunflower",
             .program_lang = "Zig",
             .color = "Pink",
         },
-        .top_cities = .{
+        .top_cities = &[_]S{
             .{ .name = "New York", .state = .{ .code = "NY" } },
             .{ .name = "Los Angeles", .state = .{ .code = "CA" } },
             .{ .name = "Chicago", .state = .{ .code = "IL" } },
