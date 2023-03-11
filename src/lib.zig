@@ -26,7 +26,7 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
     try writer.writeAll("\n");
 }
 
-fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
+inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = for (v.children) |x| {
@@ -104,7 +104,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                 try writer.writeAll(try x.toString(alloc));
                 return;
             }
-            @compileError("pek: print: unsupported type: " ++ @typeName(TO));
+            @compileError(std.fmt.comptimePrint("pek: print {s}: unsupported type: {s}", .{ v, @typeName(TO) }));
         },
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
@@ -126,7 +126,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                     switch (comptime TI) {
                         .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x),
                         .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, x),
-                        else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
+                        else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
@@ -134,7 +134,7 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                     switch (comptime TI) {
                         .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
                         .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, indent, flag1, !x),
-                        else => @compileError(comptime std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
+                        else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
                 .ifequal => {
@@ -171,13 +171,13 @@ fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime va
                 var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
                 args.@"0" = alloc;
                 args.@"1" = list.writer();
-                inline for (v.args) |arg, i| {
+                inline for (v.args, 0..) |arg, i| {
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"} } };
-                try @call(.{}, func, args);
-                try do(Ctx, alloc, writer, repvalue, list.toOwnedSlice(), ctx, indent, flag1);
+                try @call(.auto, func, args);
+                try do(Ctx, alloc, writer, repvalue, try list.toOwnedSlice(), ctx, indent, flag1);
                 return;
             }
             @compileError("pek: unknown custom function: " ++ v.name);
@@ -204,7 +204,7 @@ fn Field(comptime T: type, comptime field_name: string) type {
         return usize;
     }
     inline for (std.meta.fields(T)) |fld| {
-        if (std.mem.eql(u8, fld.name, field_name)) return fld.field_type;
+        if (comptime std.mem.eql(u8, fld.name, field_name)) return fld.type;
     }
     @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
 }

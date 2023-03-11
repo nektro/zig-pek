@@ -33,7 +33,7 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
 
     @setEvalBranchQuota(100000);
 
-    inline for (input) |c, i| {
+    inline for (input, 0..) |c, i| {
         const s = &[_]u8{c};
 
         var shouldFlush: bool = undefined;
