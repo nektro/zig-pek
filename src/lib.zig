@@ -84,13 +84,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     return;
                 }
                 const s = std.mem.trimRight(u8, x, "\n");
-                for (s) |c| {
-                    if (entityLookupBefore(&[_]u8{c})) |ent| {
-                        try writer.writeAll(ent.entity);
-                    } else {
-                        try writer.writeAll(&[_]u8{c});
-                    }
-                }
+                try writeEscaped(s, writer);
                 return;
             }
             if (TI == .Int or TI == .Float or TI == .ComptimeInt or TI == .ComptimeFloat) {
@@ -207,6 +201,16 @@ fn Field(comptime T: type, comptime field_name: string) type {
         if (comptime std.mem.eql(u8, fld.name, field_name)) return fld.type;
     }
     @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
+}
+
+pub fn writeEscaped(s: string, writer: anytype) !void {
+    for (s) |c| {
+        if (entityLookupBefore(&[_]u8{c})) |ent| {
+            try writer.writeAll(ent.entity);
+        } else {
+            try writer.writeAll(&[_]u8{c});
+        }
+    }
 }
 
 fn entityLookupBefore(in: string) ?htmlentities.Entity {
