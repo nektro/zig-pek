@@ -224,7 +224,7 @@ fn entityLookupBefore(in: string) ?htmlentities.Entity {
                 '%',
                 '+',
                 => return null,
-                else => break,
+                else => {},
             }
         }
         if (std.mem.eql(u8, e.characters, in)) {
