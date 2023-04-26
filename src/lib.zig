@@ -83,7 +83,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     try writer.writeAll(x);
                     return;
                 }
-                const s: string = x;
+                const s = std.mem.trimRight(u8, x, "\n");
                 for (s) |c| {
                     if (entityLookupBefore(&[_]u8{c})) |ent| {
                         try writer.writeAll(ent.entity);
