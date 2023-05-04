@@ -26,6 +26,8 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
     try writer.writeAll("\n");
 }
 
+pub const Writer = std.ArrayList(u8).Writer;
+
 inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, indent: usize, flag1: bool) anyerror!void {
     switch (comptime value) {
         .element => |v| {
