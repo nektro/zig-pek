@@ -70,7 +70,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
             }
         },
         .string => |v| {
-            try writer.writeAll(v[1 .. v.len - 1]);
+            try writeEscaped(v[1 .. v.len - 1], writer);
         },
         .replacement => |repl| {
             const v = repl.arms;
