@@ -83,7 +83,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     try writer.writeAll(x);
                     return;
                 }
-                const s = std.mem.trimRight(u8, x, "\n");
+                const s = std.mem.trim(u8, x, "\n");
                 try writeEscaped(s, writer);
                 return;
             }
