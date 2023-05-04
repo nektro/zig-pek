@@ -171,7 +171,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
-                const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"} } };
+                const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
                 try do(Ctx, alloc, writer, repvalue, try list.toOwnedSlice(), ctx, indent, flag1);
                 return;

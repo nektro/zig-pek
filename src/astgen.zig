@@ -51,6 +51,7 @@ pub const Body = []const Value;
 
 pub const Fn = struct {
     name: string,
+    raw: bool,
     args: []const []const string,
 };
 
@@ -145,6 +146,7 @@ const Parser = struct {
         }
         if (self.tryEatSymbol("{")) {
             if (self.tryEatSymbol("#")) {
+                const fraw = self.tryEatSymbol("#");
                 const w = self.eat(.word);
                 if (std.meta.stringToEnum(Block.Type, w)) |name| {
                     const args = self.doArgs();
@@ -174,6 +176,7 @@ const Parser = struct {
                 }
                 return Value{ .function = .{
                     .name = w,
+                    .raw = fraw,
                     .args = self.doArgs(),
                 } };
             }
