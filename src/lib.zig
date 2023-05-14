@@ -199,8 +199,10 @@ fn Field(comptime T: type, comptime field_name: string) type {
     if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
     }
-    inline for (std.meta.fields(T)) |fld| {
-        if (comptime std.mem.eql(u8, fld.name, field_name)) return fld.type;
+    for (std.meta.fields(T)) |fld| {
+        if (std.mem.eql(u8, fld.name, field_name)) {
+            return fld.type;
+        }
     }
     @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
 }
