@@ -208,34 +208,51 @@ fn Field(comptime T: type, comptime field_name: string) type {
 }
 
 pub fn writeEscaped(s: string, writer: anytype) !void {
-    for (s) |c| {
-        if (entityLookupBefore(&[_]u8{c})) |ent| {
+    const view = std.unicode.Utf8View.initUnchecked(s);
+    var iter = view.iterator();
+    while (nextCodepointSliceLossy(&iter)) |sl| {
+        const cp = std.unicode.utf8Decode(sl) catch unreachable;
+        if (isCodepointAnEntity(cp)) |ent| {
             try writer.writeAll(ent.entity);
         } else {
-            try writer.writeAll(&[_]u8{c});
+            try writer.writeAll(sl);
         }
     }
 }
 
-fn entityLookupBefore(in: string) ?htmlentities.Entity {
+fn nextCodepointSliceLossy(it: *std.unicode.Utf8Iterator) ?[]const u8 {
+    if (it.i >= it.bytes.len) return null;
+    const cp_len = std.unicode.utf8ByteSequenceLength(it.bytes[it.i]) catch {
+        it.i += 1;
+        return "�";
+    };
+    if (it.i + cp_len > it.bytes.len) return null;
+    const maybe = it.bytes[it.i..][0..cp_len];
+    _ = std.unicode.utf8Decode(maybe) catch {
+        it.i += 1;
+        return "�";
+    };
+    it.i += cp_len;
+    return maybe;
+}
+
+fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
+    switch (cp) {
+        '\n',
+        '.',
+        ':',
+        '(',
+        ')',
+        '%',
+        '+',
+        => return null,
+        else => {},
+    }
     for (htmlentities.ENTITIES) |e| {
-        if (!std.mem.endsWith(u8, e.entity, ";")) {
-            continue;
-        }
-        if (in.len == 1) {
-            switch (in[0]) {
-                '\n',
-                '.',
-                ':',
-                '(',
-                ')',
-                '%',
-                '+',
-                => return null,
-                else => {},
-            }
-        }
-        if (std.mem.eql(u8, e.characters, in)) {
+        if (e.entity.len == 0) continue;
+        if (e.entity[e.entity.len - 1] != ';') continue;
+
+        if (e.codepoints == .Single and e.codepoints.Single == cp) {
             return e;
         }
     }
