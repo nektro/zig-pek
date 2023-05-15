@@ -148,6 +148,8 @@ const Parser = struct {
             if (self.tryEatSymbol("#")) {
                 const fraw = self.tryEatSymbol("#");
                 const w = self.eat(.word);
+                std.debug.assert(w.len > 0);
+                std.debug.assert(w[0] != '_');
                 if (std.meta.stringToEnum(Block.Type, w)) |name| {
                     const args = self.doArgs();
                     var children: []const Value = &.{};
