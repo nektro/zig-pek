@@ -212,6 +212,7 @@ pub const DoOptions = struct {
 fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
     if (args.len == 0) return ctx;
     if (args[0][0] == '"') return std.mem.trim(u8, args[0], "\"");
+    if (@typeInfo(@TypeOf(ctx)) == .Optional) return search(args, ctx.?);
     const f = @field(ctx, args[0]);
     if (args.len == 1) return f;
     return search(args[1..], f);
@@ -225,6 +226,10 @@ fn FieldSearch(comptime T: type, comptime args: []const string) type {
 fn Field(comptime T: type, comptime field_name: string) type {
     if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
+    }
+    switch (@typeInfo(T)) {
+        .Optional => |info| return Field(info.child, field_name),
+        else => {},
     }
     for (std.meta.fields(T)) |fld| {
         if (std.mem.eql(u8, fld.name, field_name)) {
