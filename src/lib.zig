@@ -198,6 +198,12 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                 try do(Ctx, alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
                 return;
             }
+            if (v.raw and @hasDecl(Ctx, "pek_" ++ v.name)) {
+                @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
+            }
+            if (!v.raw and @hasDecl(Ctx, "pek__" ++ v.name)) {
+                @compileError("pek: attempted to call raw custom function: '_" ++ v.name ++ "' but did not use '{#" ++ v.name ++ "}'");
+            }
             @compileError("pek: unknown custom function: " ++ v.name);
         },
         else => unreachable,
