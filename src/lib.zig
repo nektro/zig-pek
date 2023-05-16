@@ -189,8 +189,9 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                 var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
                 args.@"0" = alloc;
                 args.@"1" = list.writer();
+                args[2] = opts;
                 inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
+                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 3});
                     @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
