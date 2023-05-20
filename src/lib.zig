@@ -22,7 +22,8 @@ pub fn parse(comptime input: string) astgen.Value {
 
 pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype) !void {
     try writer.writeAll("<!DOCTYPE html>\n");
-    try do(Ctx, alloc, writer, value, data, data, .{
+    try do(alloc, writer, value, data, data, .{
+        .Ctx = Ctx,
         .indent = 0,
         .flag1 = false,
     });
@@ -31,10 +32,10 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
 
 pub const Writer = std.ArrayList(u8).Writer;
 
-inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, opts: DoOptions) anyerror!void {
+inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
     switch (comptime value) {
         .element => |v| {
-            const hastext = for (v.children) |x| {
+            const hastext = comptime for (v.children) |x| {
                 switch (x) {
                     .string, .replacement, .function => break true,
                     .element, .attr, .block, .body => {},
@@ -50,7 +51,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     .string => try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value.string[1 .. it.value.string.len - 1]) }),
                     .body => {
                         try writer.print(" {s}=\"", .{it.key});
-                        try do(Ctx, alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, opts);
+                        try do(alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, opts);
                         try writer.print("\"", .{});
                     },
                 }
@@ -67,7 +68,8 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
 
                 if (!hastext) try writer.writeAll("\n");
                 inline for (v.children) |it| {
-                    try do(Ctx, alloc, writer, it, data, ctx, .{
+                    try do(alloc, writer, it, data, ctx, .{
+                        .Ctx = opts.Ctx,
                         .indent = opts.indent + 1,
                         .flag1 = !hastext,
                     });
@@ -117,25 +119,25 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
             switch (v.name) {
                 .each => {
                     comptime assertEqual(v.args.len, 1);
-                    for (x) |item| try do(Ctx, alloc, writer, body, item, ctx, opts);
+                    for (x) |item| try do(alloc, writer, body, item, ctx, opts);
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
                     if (comptime std.meta.trait.isIndexable(T)) {
-                        try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, x.len > 0);
+                        try doif(alloc, writer, body, bottom, data, ctx, opts, x.len > 0);
                         return;
                     }
                     switch (comptime TI) {
-                        .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, x),
-                        .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, opts, x),
+                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
+                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, x),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
                     switch (comptime TI) {
-                        .Bool => try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, !x),
-                        .Optional => try docap(Ctx, alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
@@ -143,31 +145,31 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
-                        return try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
+                        return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
-                    try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, x == y);
+                    try doif(alloc, writer, body, bottom, data, ctx, opts, x == y);
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
-                        return try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
+                        return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
-                    try doif(Ctx, alloc, writer, body, bottom, data, ctx, opts, x != y);
+                    try doif(alloc, writer, body, bottom, data, ctx, opts, x != y);
                 },
             }
         },
         .body => |v| {
             inline for (v) |val| {
-                try do(Ctx, alloc, writer, val, data, ctx, opts);
+                try do(alloc, writer, val, data, ctx, opts);
             }
         },
         .function => |v| {
             var arena = std.heap.ArenaAllocator.init(alloc);
             defer arena.deinit();
 
-            if (!v.raw and @hasDecl(Ctx, "pek_" ++ v.name)) {
-                const func = @field(Ctx, "pek_" ++ v.name);
+            if (!v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
+                const func = @field(opts.Ctx, "pek_" ++ v.name);
                 var list = std.ArrayList(u8).init(arena.allocator());
                 errdefer list.deinit();
                 var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
@@ -179,30 +181,35 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
-                try do(Ctx, alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
+                try do(alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
                 return;
             }
-            if (v.raw and @hasDecl(Ctx, "pek__" ++ v.name)) {
-                const func = @field(Ctx, "pek__" ++ v.name);
+            if (v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
+                const func = @field(opts.Ctx, "pek__" ++ v.name);
                 var list = std.ArrayList(u8).init(arena.allocator());
                 errdefer list.deinit();
-                var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
-                args.@"0" = alloc;
-                args.@"1" = list.writer();
-                args[2] = opts;
+                const AT = std.meta.ArgsTuple(@TypeOf(func));
+                const ATT = std.meta.fieldInfo(AT, .@"3").type;
+                var tupargs = @as(ATT, undefined);
+                var args = .{
+                    alloc,
+                    list.writer(),
+                    opts,
+                    tupargs,
+                };
                 inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 3});
-                    @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
+                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i});
+                    @field(args[3], field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
-                try do(Ctx, alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
+                try do(alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
                 return;
             }
-            if (v.raw and @hasDecl(Ctx, "pek_" ++ v.name)) {
+            if (v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
                 @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
             }
-            if (!v.raw and @hasDecl(Ctx, "pek__" ++ v.name)) {
+            if (!v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
                 @compileError("pek: attempted to call raw custom function: '_" ++ v.name ++ "' but did not use '{#" ++ v.name ++ "}'");
             }
             @compileError("pek: unknown custom function: " ++ v.name);
@@ -212,6 +219,7 @@ inline fn do(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comp
 }
 
 pub const DoOptions = struct {
+    Ctx: type,
     indent: usize,
     flag1: bool,
 };
@@ -328,18 +336,18 @@ fn contains(haystack: []const string, needle: string) bool {
     return false;
 }
 
-fn doif(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, opts: DoOptions, flag2: bool) anyerror!void {
+fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: bool) anyerror!void {
     if (flag2) {
-        try do(Ctx, alloc, writer, top, data, ctx, opts);
+        try do(alloc, writer, top, data, ctx, opts);
     } else {
-        try do(Ctx, alloc, writer, bottom, data, ctx, opts);
+        try do(alloc, writer, bottom, data, ctx, opts);
     }
 }
 
-fn docap(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, opts: DoOptions, flag2: anytype) anyerror!void {
+fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: anytype) anyerror!void {
     if (flag2) |_| {
-        try do(Ctx, alloc, writer, top, data, ctx, opts);
+        try do(alloc, writer, top, data, ctx, opts);
     } else {
-        try do(Ctx, alloc, writer, bottom, data, ctx, opts);
+        try do(alloc, writer, bottom, data, ctx, opts);
     }
 }
