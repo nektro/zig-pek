@@ -30,6 +30,11 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
     try writer.writeAll("\n");
 }
 
+pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, comptime opts: DoOptions, data: anytype) !void {
+    try do(alloc, writer, value, data, data, opts);
+    try writer.writeAll("\n");
+}
+
 pub const Writer = std.ArrayList(u8).Writer;
 
 inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
