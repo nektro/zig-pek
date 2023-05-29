@@ -113,6 +113,15 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 try writer.writeAll(try x.toString(alloc));
                 return;
             }
+            if (comptime isArrayOf(u8)(TO)) {
+                if (repl.raw) {
+                    try writer.writeAll(&x);
+                    return;
+                }
+                const s = std.mem.trim(u8, &x, "\n");
+                try writeEscaped(s, writer);
+                return;
+            }
             @compileError(std.fmt.comptimePrint("pek: print {s}: unsupported type: {s}", .{ v, @typeName(TO) }));
         },
         .block => |v| {
@@ -355,4 +364,16 @@ fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, 
     } else {
         try do(alloc, writer, bottom, data, ctx, opts);
     }
+}
+
+fn isArrayOf(comptime T: type) std.meta.trait.TraitFn {
+    const Closure = struct {
+        pub fn trait(comptime C: type) bool {
+            return switch (@typeInfo(C)) {
+                .Array => |ti| ti.child == T,
+                else => false,
+            };
+        }
+    };
+    return Closure.trait;
 }
