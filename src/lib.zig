@@ -137,6 +137,11 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 },
                 .@"if" => {
                     comptime assertEqual(v.args.len, 1);
+                    if (v.func) |n| {
+                        const x2 = try @field(opts.Ctx, "pek_" ++ n)(alloc, x);
+                        try doif(alloc, writer, body, bottom, data, ctx, opts, x2);
+                        return;
+                    }
                     if (comptime std.meta.trait.isIndexable(T)) {
                         try doif(alloc, writer, body, bottom, data, ctx, opts, x.len > 0);
                         return;
@@ -149,6 +154,11 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 },
                 .ifnot => {
                     comptime assertEqual(v.args.len, 1);
+                    if (v.func) |n| {
+                        const x2 = try @field(opts.Ctx, "pek_" ++ n)(alloc, x);
+                        try doif(alloc, writer, body, bottom, data, ctx, opts, !x2);
+                        return;
+                    }
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),

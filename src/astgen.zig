@@ -34,6 +34,7 @@ pub const Replacement = struct {
 
 pub const Block = struct {
     name: Type,
+    func: ?string,
     args: []const []const string,
     body: Body,
     bttm: Body,
@@ -151,6 +152,7 @@ const Parser = struct {
                 std.debug.assert(w.len > 0);
                 std.debug.assert(w[0] != '_');
                 if (std.meta.stringToEnum(Block.Type, w)) |name| {
+                    const func = if (self.tryEatSymbol("#")) self.eat(.word) else null;
                     const args = self.doArgs();
                     var children: []const Value = &.{};
                     var bottom: []const Value = &.{};
@@ -171,6 +173,7 @@ const Parser = struct {
                     self.eatSymbol("/");
                     return Value{ .block = Block{
                         .name = name,
+                        .func = func,
                         .args = args,
                         .body = children,
                         .bttm = bottom,
