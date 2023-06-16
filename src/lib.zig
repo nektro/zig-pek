@@ -127,7 +127,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
             const bottom = astgen.Value{ .body = v.bttm };
-            const x = if (comptime std.mem.eql(u8, v.args[0][0], "this")) search(v.args[0][1..], data) else search(v.args[0], ctx);
+            const x = resolveArg(v.args[0], data, ctx);
             const T = @TypeOf(x);
             const TI = @typeInfo(T);
             switch (v.name) {
@@ -167,7 +167,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
+                    const y = resolveArg(v.args[1], data, ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
@@ -175,7 +175,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const y = if (comptime std.mem.eql(u8, v.args[1][0], "this")) search(v.args[1][1..], data) else search(v.args[1], ctx);
+                    const y = resolveArg(v.args[1], data, ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
@@ -201,7 +201,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 args.@"1" = list.writer();
                 inline for (v.args, 0..) |arg, i| {
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
-                    @field(args, field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
+                    @field(args, field_name) = resolveArg(arg, data, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
@@ -223,7 +223,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 };
                 inline for (v.args, 0..) |arg, i| {
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i});
-                    @field(args[3], field_name) = if (comptime std.mem.eql(u8, arg[0], "this")) search(arg[1..], data) else search(arg, ctx);
+                    @field(args[3], field_name) = resolveArg(arg, data, ctx);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
@@ -247,6 +247,20 @@ pub const DoOptions = struct {
     indent: usize,
     flag1: bool,
 };
+
+fn resolveArg(comptime arg: astgen.Arg, data: anytype, ctx: anytype) ResolveArg(arg, @TypeOf(data), @TypeOf(ctx)) {
+    return switch (arg) {
+        .plain => |av| av[1 .. av.len - 1],
+        .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) search(av[1..], data) else search(av, ctx),
+    };
+}
+
+fn ResolveArg(comptime arg: astgen.Arg, comptime This: type, comptime Ctx: type) type {
+    return switch (arg) {
+        .plain => string,
+        .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) FieldSearch(This, av[1..]) else FieldSearch(Ctx, av),
+    };
+}
 
 fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
     if (args.len == 0) return ctx;

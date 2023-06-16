@@ -35,7 +35,7 @@ pub const Replacement = struct {
 pub const Block = struct {
     name: Type,
     func: ?string,
-    args: []const []const string,
+    args: []const Arg,
     body: Body,
     bttm: Body,
 
@@ -53,7 +53,12 @@ pub const Body = []const Value;
 pub const Fn = struct {
     name: string,
     raw: bool,
-    args: []const []const string,
+    args: []const Arg,
+};
+
+pub const Arg = union(enum) {
+    lookup: []const string,
+    plain: string,
 };
 
 //
@@ -93,6 +98,7 @@ const Parser = struct {
     }
 
     fn tryEatSymbol(comptime self: *Parser, comptime needle: string) bool {
+        if (self.index >= self.tokens.len) return false;
         switch (self.tokens[self.index].data) {
             .symbol => |sym| {
                 if (std.mem.eql(u8, sym, needle)) {
@@ -194,23 +200,25 @@ const Parser = struct {
         return Value{ .element = self.doElement() };
     }
 
-    pub fn doArgs(comptime self: *Parser) []const []const string {
-        var ret: []const []const string = &.{};
-        var temp: []const string = &.{self.eat(.word)};
+    pub fn doArgs(comptime self: *Parser) []const Arg {
+        var ret: []const Arg = &.{};
+        var temp: []const string = &.{};
         while (!self.tryEatSymbol("}")) {
+            if (self.nextIs(.string)) {
+                ret = ret ++ &[_]Arg{.{ .plain = self.eat(.string) }};
+                continue;
+            }
+            if (temp.len == 0 and self.nextIs(.word)) {
+                temp = temp ++ &[_]string{self.eat(.word)};
+            }
             if (self.tryEatSymbol(".")) {
                 temp = temp ++ &[_]string{self.eat(.word)};
             } else {
-                ret = ret ++ &[_][]const string{temp};
+                ret = ret ++ &[_]Arg{.{ .lookup = temp }};
                 temp = &.{};
-                if (comptime self.nextIs(.string)) {
-                    ret = ret ++ &[_][]const string{&.{self.eat(.string)}};
-                } else {
-                    temp = &.{self.eat(.word)};
-                }
             }
         }
-        if (temp.len > 0) ret = ret ++ &[_][]const string{temp};
+        if (temp.len > 0) ret = ret ++ &[_]Arg{.{ .lookup = temp }};
         return ret;
     }
 
