@@ -4,5 +4,4 @@ main: src/lib.zig
 license: AGPL-3.0
 description: An HTML preprocessor with a builtin template engine.
 dependencies:
-  - src: git https://github.com/nektro/zig-range
   - src: git https://github.com/kivikakk/htmlentities.zig

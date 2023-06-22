@@ -9,7 +9,6 @@
 
 const std = @import("std");
 const string = []const u8;
-const range = @import("range").range;
 const htmlentities = @import("htmlentities");
 const root = @import("root");
 
@@ -47,7 +46,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 }
             } else false;
 
-            if (opts.flag1) for (range(opts.indent)) |_| try writer.writeAll("    ");
+            if (opts.flag1) for (0..opts.indent) |_| try writer.writeAll("    ");
             try writer.writeAll("<");
             try writer.writeAll(v.name);
 
@@ -79,7 +78,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                         .flag1 = !hastext,
                     });
                 }
-                if (!hastext) for (range(opts.indent)) |_| try writer.writeAll("    ");
+                if (!hastext) for (0..opts.indent) |_| try writer.writeAll("    ");
                 try writer.print("</{s}>", .{v.name});
                 if (opts.flag1) try writer.writeAll("\n");
             }
