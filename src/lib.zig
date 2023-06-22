@@ -251,6 +251,7 @@ fn resolveArg(comptime arg: astgen.Arg, data: anytype, ctx: anytype) ResolveArg(
     return switch (arg) {
         .plain => |av| av[1 .. av.len - 1],
         .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) search(av[1..], data) else search(av, ctx),
+        .int => |av| av,
     };
 }
 
@@ -258,6 +259,7 @@ fn ResolveArg(comptime arg: astgen.Arg, comptime This: type, comptime Ctx: type)
     return switch (arg) {
         .plain => string,
         .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) FieldSearch(This, av[1..]) else FieldSearch(Ctx, av),
+        .int => u64,
     };
 }
 

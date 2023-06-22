@@ -1,5 +1,6 @@
 const std = @import("std");
 const Token = @import("./tokenize.zig").Token;
+const extras = @import("extras");
 
 const string = []const u8;
 
@@ -59,6 +60,7 @@ pub const Fn = struct {
 pub const Arg = union(enum) {
     lookup: []const string,
     plain: string,
+    int: u64,
 };
 
 //
@@ -209,7 +211,12 @@ const Parser = struct {
                 continue;
             }
             if (temp.len == 0 and self.nextIs(.word)) {
-                temp = temp ++ &[_]string{self.eat(.word)};
+                const next_word = self.eat(.word);
+                if (extras.matchesAll(u8, next_word, std.ascii.isDigit)) {
+                    ret = ret ++ &[_]Arg{.{ .int = std.fmt.parseUnsigned(u64, next_word, 10) catch unreachable }};
+                    continue;
+                }
+                temp = temp ++ &[_]string{next_word};
             }
             if (self.tryEatSymbol(".")) {
                 temp = temp ++ &[_]string{self.eat(.word)};
