@@ -170,6 +170,9 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
+                    if (comptime std.meta.trait.isSlice(@TypeOf(x, y))) {
+                        return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, x, y));
+                    }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x == y);
                 },
                 .ifnotequal => {
@@ -177,6 +180,9 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     const y = resolveArg(v.args[1], data, ctx);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
+                    }
+                    if (comptime std.meta.trait.isSlice(@TypeOf(x, y))) {
+                        return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, x, y));
                     }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x != y);
                 },
