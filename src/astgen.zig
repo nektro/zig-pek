@@ -207,6 +207,10 @@ const Parser = struct {
         var temp: []const string = &.{};
         while (!self.tryEatSymbol("}")) {
             if (self.nextIs(.string)) {
+                if (temp.len > 0) {
+                    ret = ret ++ &[_]Arg{.{ .lookup = temp }};
+                    temp = &.{};
+                }
                 ret = ret ++ &[_]Arg{.{ .plain = self.eat(.string) }};
                 continue;
             }
