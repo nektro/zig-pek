@@ -135,12 +135,25 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     for (x) |item| try do(alloc, writer, body, item, ctx, opts);
                 },
                 .@"if" => {
-                    comptime assertEqual(v.args.len, 1);
                     if (v.func) |n| {
-                        const x2 = try @field(opts.Ctx, "pek_" ++ n)(alloc, x);
+                        const f = @field(opts.Ctx, "pek_" ++ n);
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
+                            2 => f(alloc, x),
+                            3 => blk: {
+                                const y = resolveArg(v.args[1], data, ctx);
+                                break :blk f(alloc, x, y);
+                            },
+                            4 => blk: {
+                                const y = resolveArg(v.args[1], data, ctx);
+                                const z = resolveArg(v.args[2], data, ctx);
+                                break :blk f(alloc, x, y, z);
+                            },
+                            else => unreachable, // TODO
+                        };
                         try doif(alloc, writer, body, bottom, data, ctx, opts, x2);
                         return;
                     }
+                    comptime assertEqual(v.args.len, 1);
                     if (comptime std.meta.trait.isIndexable(T)) {
                         try doif(alloc, writer, body, bottom, data, ctx, opts, x.len > 0);
                         return;
@@ -152,12 +165,25 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     }
                 },
                 .ifnot => {
-                    comptime assertEqual(v.args.len, 1);
                     if (v.func) |n| {
-                        const x2 = try @field(opts.Ctx, "pek_" ++ n)(alloc, x);
+                        const f = @field(opts.Ctx, "pek_" ++ n);
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
+                            2 => f(alloc, x),
+                            3 => blk: {
+                                const y = resolveArg(v.args[1], data, ctx);
+                                break :blk f(alloc, x, y);
+                            },
+                            4 => blk: {
+                                const y = resolveArg(v.args[1], data, ctx);
+                                const z = resolveArg(v.args[2], data, ctx);
+                                break :blk f(alloc, x, y, z);
+                            },
+                            else => unreachable, // TODO
+                        };
                         try doif(alloc, writer, body, bottom, data, ctx, opts, !x2);
                         return;
                     }
+                    comptime assertEqual(v.args.len, 1);
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
