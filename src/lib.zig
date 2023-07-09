@@ -184,6 +184,10 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                         return;
                     }
                     comptime assertEqual(v.args.len, 1);
+                    if (comptime std.meta.trait.isIndexable(T)) {
+                        try doif(alloc, writer, body, bottom, data, ctx, opts, x.len == 0);
+                        return;
+                    }
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
