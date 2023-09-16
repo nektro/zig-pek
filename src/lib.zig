@@ -36,7 +36,7 @@ pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: a
 
 pub const Writer = std.ArrayList(u8).Writer;
 
-inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
+fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = comptime for (v.children) |x| {
