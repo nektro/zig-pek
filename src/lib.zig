@@ -232,6 +232,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 var list = std.ArrayList(u8).init(arena.allocator());
                 errdefer list.deinit();
                 var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
+                comptime std.debug.assert(args.len - 2 == v.args.len);
                 args.@"0" = alloc;
                 args.@"1" = list.writer();
                 inline for (v.args, 0..) |arg, i| {
@@ -249,6 +250,7 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                 errdefer list.deinit();
                 const AT = std.meta.ArgsTuple(@TypeOf(func));
                 const ATT = std.meta.fieldInfo(AT, .@"3").type;
+                comptime std.debug.assert(std.meta.fields(ATT).len == v.args.len);
                 var tupargs = @as(ATT, undefined);
                 var args = .{
                     alloc,
