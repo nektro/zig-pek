@@ -6,3 +6,4 @@ description: An HTML preprocessor with a builtin template engine.
 dependencies:
   - src: git https://github.com/kivikakk/htmlentities.zig
   - src: git https://github.com/nektro/zig-extras
+  - src: git https://github.com/nektro/zig-tracer
