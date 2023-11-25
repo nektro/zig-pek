@@ -314,6 +314,8 @@ fn ResolveArg(comptime arg: astgen.Arg, comptime This: type, comptime Ctx: type)
 fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx), args) {
     if (args.len == 0) return ctx;
     if (args[0][0] == '"') return std.mem.trim(u8, args[0], "\"");
+    if (comptime std.mem.eql(u8, args[0], "true")) return true;
+    if (comptime std.mem.eql(u8, args[0], "false")) return false;
     if (@typeInfo(@TypeOf(ctx)) == .Optional) return search(args, ctx.?);
     const f = @field(ctx, args[0]);
     if (args.len == 1) return f;
@@ -322,6 +324,8 @@ fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx),
 
 fn FieldSearch(comptime T: type, comptime args: []const string) type {
     if (args.len > 0 and args[0][0] == '"') return string;
+    if (args.len > 0 and std.mem.eql(u8, args[0], "true")) return bool;
+    if (args.len > 0 and std.mem.eql(u8, args[0], "false")) return bool;
     return if (args.len == 0) T else if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
 }
 
