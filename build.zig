@@ -3,16 +3,18 @@ const deps = @import("./deps.zig");
 
 pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
+    const mode = b.option(std.builtin.Mode, "mode", "") orelse .Debug;
 
-    const mode = b.standardReleaseOptions();
-
-    const exe = b.addExecutable("zig-pek", "src/main.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
+    const exe = b.addExecutable(.{
+        .name = "zig-pek",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = mode,
+    });
     deps.addAllTo(exe);
-    exe.install();
+    b.installArtifact(exe);
 
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
