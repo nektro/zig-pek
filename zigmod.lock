@@ -1,3 +1,4 @@
 2
-git https://github.com/nektro/zig-range commit-4b2f12808aa09be4b27a163efc424dd4e0415992
-git https://github.com/kivikakk/htmlentities.zig commit-311c844c1d1d1cb968eedfeb76ce911038b1043a
+git https://github.com/kivikakk/htmlentities.zig commit-b85de86198a34da5a5d9c07cb8489fbebd06023e
+git https://github.com/nektro/zig-extras commit-05f0e90a185cb04a09b96f686dffc6375c420e9b
+git https://github.com/nektro/zig-tracer commit-5c4151729c6dfc30fc9ec69f60482d43a8820189

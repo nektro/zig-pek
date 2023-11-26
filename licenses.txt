@@ -1,0 +1,9 @@
+AGPL-3.0:
+= https://spdx.org/licenses/AGPL-3.0
+- This
+
+MIT:
+= https://spdx.org/licenses/MIT
+- git https://github.com/kivikakk/htmlentities.zig
+- git https://github.com/nektro/zig-extras
+- git https://github.com/nektro/zig-tracer
