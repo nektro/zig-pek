@@ -30,6 +30,3 @@ html[lang="en"](
 ```
 $ zigmod aq add 1/nektro/pek
 ```
-
-## License
-AGPL-3.0
