@@ -260,7 +260,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 errdefer list.deinit();
                 const AT = std.meta.ArgsTuple(@TypeOf(func));
                 const ATT = std.meta.fieldInfo(AT, .@"3").type;
-                comptime std.debug.assert(std.meta.fields(ATT).len == v.args.len);
+                if (v.args.len != std.meta.fields(ATT).len) @compileError(std.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
                 var tupargs = @as(ATT, undefined);
                 var args = .{
                     alloc,
