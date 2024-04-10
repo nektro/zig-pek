@@ -61,6 +61,7 @@ pub const Arg = union(enum) {
     lookup: []const string,
     plain: string,
     int: u64,
+    value: []const Value,
 };
 
 //
@@ -212,6 +213,11 @@ const Parser = struct {
                     temp = &.{};
                 }
                 ret = ret ++ &[_]Arg{.{ .plain = self.eat(.string) }};
+                continue;
+            }
+            if (self.tryEatSymbol("(")) {
+                self.index -= 1;
+                ret = ret ++ &[_]Arg{.{ .value = self.doChildren() }};
                 continue;
             }
             if (temp.len == 0 and self.nextIs(.word)) {

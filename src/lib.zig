@@ -94,7 +94,8 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             }
         },
         .string => |v| {
-            try writeEscaped(v[1 .. v.len - 1], writer);
+            if (opts.escaped) try writeEscaped(v[1 .. v.len - 1], writer);
+            if (!opts.escaped) try writer.writeAll(v[1 .. v.len - 1]);
         },
         .replacement => |repl| {
             const v = repl.arms;
@@ -108,7 +109,8 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     return;
                 }
                 const s = std.mem.trim(u8, x, "\n");
-                try writeEscaped(s, writer);
+                if (opts.escaped) try writeEscaped(s, writer);
+                if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
             if (TI == .Int or TI == .Float or TI == .ComptimeInt or TI == .ComptimeFloat) {
@@ -128,7 +130,8 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     return;
                 }
                 const s = std.mem.trim(u8, &x, "\n");
-                try writeEscaped(s, writer);
+                if (opts.escaped) try writeEscaped(s, writer);
+                if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
             @compileError(std.fmt.comptimePrint("pek: print {s}: unsupported type: {s}", .{ v, @typeName(TO) }));
@@ -136,7 +139,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
             const bottom = astgen.Value{ .body = v.bttm };
-            const x = resolveArg(v.args[0], data, ctx);
+            const x = try resolveArg(v.args[0], alloc, data, ctx, opts);
             const T = @TypeOf(x);
             const TI = @typeInfo(T);
             switch (v.name) {
@@ -150,12 +153,12 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
                             2 => f(alloc, x),
                             3 => blk: {
-                                const y = resolveArg(v.args[1], data, ctx);
+                                const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
                                 break :blk f(alloc, x, y);
                             },
                             4 => blk: {
-                                const y = resolveArg(v.args[1], data, ctx);
-                                const z = resolveArg(v.args[2], data, ctx);
+                                const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
+                                const z = try resolveArg(v.args[2], alloc, data, ctx, opts);
                                 break :blk f(alloc, x, y, z);
                             },
                             else => unreachable, // TODO
@@ -180,12 +183,12 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
                             2 => f(alloc, x),
                             3 => blk: {
-                                const y = resolveArg(v.args[1], data, ctx);
+                                const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
                                 break :blk f(alloc, x, y);
                             },
                             4 => blk: {
-                                const y = resolveArg(v.args[1], data, ctx);
-                                const z = resolveArg(v.args[2], data, ctx);
+                                const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
+                                const z = try resolveArg(v.args[2], alloc, data, ctx, opts);
                                 break :blk f(alloc, x, y, z);
                             },
                             else => unreachable, // TODO
@@ -206,7 +209,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const y = resolveArg(v.args[1], data, ctx);
+                    const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
@@ -217,7 +220,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 },
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
-                    const y = resolveArg(v.args[1], data, ctx);
+                    const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
                     if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
                     }
@@ -247,7 +250,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 args.@"1" = list.writer();
                 inline for (v.args, 0..) |arg, i| {
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
-                    @field(args, field_name) = resolveArg(arg, data, ctx);
+                    @field(args, field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
@@ -270,7 +273,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 };
                 inline for (v.args, 0..) |arg, i| {
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i});
-                    @field(args[3], field_name) = resolveArg(arg, data, ctx);
+                    @field(args[3], field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
                 const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
@@ -293,13 +296,21 @@ pub const DoOptions = struct {
     Ctx: type,
     indent: usize,
     flag1: bool,
+    escaped: bool = true,
 };
 
-fn resolveArg(comptime arg: astgen.Arg, data: anytype, ctx: anytype) ResolveArg(arg, @TypeOf(data), @TypeOf(ctx)) {
+fn resolveArg(comptime arg: astgen.Arg, alloc: std.mem.Allocator, data: anytype, ctx: anytype, comptime opts: DoOptions) !ResolveArg(arg, @TypeOf(data), @TypeOf(ctx)) {
     return switch (arg) {
         .plain => |av| av[1 .. av.len - 1],
         .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) search(av[1..], data) else search(av, ctx),
         .int => |av| av,
+        .value => |av| {
+            var list = std.ArrayList(u8).init(alloc);
+            comptime var newopts = opts;
+            newopts.escaped = false;
+            try do(alloc, list.writer(), astgen.Value{ .body = av }, data, ctx, newopts);
+            return list.items;
+        },
     };
 }
 
@@ -308,6 +319,7 @@ fn ResolveArg(comptime arg: astgen.Arg, comptime This: type, comptime Ctx: type)
         .plain => string,
         .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) FieldSearch(This, av[1..]) else FieldSearch(Ctx, av),
         .int => u64,
+        .value => string,
     };
 }
 
