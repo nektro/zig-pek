@@ -12,6 +12,7 @@ const string = []const u8;
 const htmlentities = @import("htmlentities");
 const root = @import("root");
 const tracer = @import("tracer");
+const extras = @import("extras");
 
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
@@ -65,7 +66,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     .string => try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value.string[1 .. it.value.string.len - 1]) }),
                     .body => {
                         try writer.print(" {s}=\"", .{it.key});
-                        try do(alloc, writer, astgen.Value{ .body = it.value.body }, data, ctx, opts);
+                        inline for (it.value.body) |bval| try do(alloc, writer, bval, data, ctx, opts);
                         try writer.print("\"", .{});
                     },
                 }
@@ -103,7 +104,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             const TO = @TypeOf(x);
             const TI = @typeInfo(TO);
 
-            if (comptime std.meta.trait.isZigString(TO)) {
+            if (comptime extras.isZigString(TO)) {
                 if (repl.raw) {
                     try writer.writeAll(x);
                     return;
@@ -117,10 +118,10 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 try writer.print("{d}", .{x});
                 return;
             }
-            if (comptime std.meta.trait.hasFn("format")(TO)) {
+            if (comptime extras.hasFn("format")(TO)) {
                 return std.fmt.format(writer, "{}", .{x});
             }
-            if (comptime std.meta.trait.hasFn("toString")(TO)) {
+            if (comptime extras.hasFn("toString")(TO)) {
                 try writer.writeAll(try x.toString(alloc));
                 return;
             }
@@ -167,7 +168,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         return;
                     }
                     comptime assertEqual(v.args.len, 1);
-                    if (comptime std.meta.trait.isIndexable(T)) {
+                    if (comptime extras.isIndexable(T)) {
                         try doif(alloc, writer, body, bottom, data, ctx, opts, x.len > 0);
                         return;
                     }
@@ -197,7 +198,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         return;
                     }
                     comptime assertEqual(v.args.len, 1);
-                    if (comptime std.meta.trait.isIndexable(T)) {
+                    if (comptime extras.isIndexable(T)) {
                         try doif(alloc, writer, body, bottom, data, ctx, opts, x.len == 0);
                         return;
                     }
@@ -210,10 +211,10 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
-                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
+                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
-                    if (comptime std.meta.trait.isSlice(@TypeOf(x, y))) {
+                    if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, x, y));
                     }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x == y);
@@ -221,10 +222,10 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
-                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime std.meta.trait.isZigString(@TypeOf(y))) {
+                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
                     }
-                    if (comptime std.meta.trait.isSlice(@TypeOf(x, y))) {
+                    if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, x, y));
                     }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x != y);
@@ -265,6 +266,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 const ATT = std.meta.fieldInfo(AT, .@"3").type;
                 if (v.args.len != std.meta.fields(ATT).len) @compileError(std.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
                 var tupargs = @as(ATT, undefined);
+                _ = &tupargs;
                 var args = .{
                     alloc,
                     list.writer(),
@@ -342,7 +344,7 @@ fn FieldSearch(comptime T: type, comptime args: []const string) type {
 }
 
 fn Field(comptime T: type, comptime field_name: string) type {
-    if (std.meta.trait.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
+    if (extras.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
     }
     switch (@typeInfo(T)) {
@@ -464,7 +466,7 @@ fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, 
     }
 }
 
-fn isArrayOf(comptime T: type) std.meta.trait.TraitFn {
+fn isArrayOf(comptime T: type) fn (type) bool {
     const Closure = struct {
         pub fn trait(comptime C: type) bool {
             return switch (@typeInfo(C)) {

@@ -14,15 +14,15 @@ pub fn build(b: *std.Build) void {
     deps.addAllTo(exe);
     b.installArtifact(exe);
 
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    const tests = b.addTest(.{
+        .root_source_file = b.path("test.zig"),
+        .target = target,
+        .optimize = mode,
+    });
+    deps.addAllTo(tests);
 
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
-
-    const test_step = b.step("test", "dummy test step to pass CI checks");
-    _ = test_step;
+    const test_step = b.step("test", "Run all library tests");
+    const tests_run = b.addRunArtifact(tests);
+    tests_run.has_side_effects = true;
+    test_step.dependOn(&tests_run.step);
 }
