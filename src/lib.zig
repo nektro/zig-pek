@@ -135,6 +135,12 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
+            if (TI == .Enum) {
+                const s = @tagName(x);
+                if (opts.escaped) try writeEscaped(s, writer);
+                if (!opts.escaped) try writer.writeAll(s);
+                return;
+            }
             @compileError(std.fmt.comptimePrint("pek: print {s}: unsupported type: {s}", .{ v, @typeName(TO) }));
         },
         .block => |v| {
@@ -400,6 +406,8 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
         ')',
         '%',
         '+',
+        '/',
+        '@',
         => return null,
         else => {},
     }
