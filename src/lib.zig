@@ -181,6 +181,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, x),
+                        .Int => try doif(alloc, writer, body, bottom, data, ctx, opts, x != 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
@@ -211,6 +212,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     switch (comptime TI) {
                         .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
                         .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .Int => try doif(alloc, writer, body, bottom, data, ctx, opts, x == 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
