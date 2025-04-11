@@ -35,9 +35,6 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
 }
 
 pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, comptime opts: DoOptions, data: anytype) !void {
-    const t = tracer.trace(@src(), "", .{});
-    defer t.end();
-
     try do(alloc, writer, value, data, data, opts);
     try writer.writeAll("\n");
 }
@@ -45,9 +42,6 @@ pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: a
 pub const Writer = std.ArrayList(u8).Writer;
 
 fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
-    const t = tracer.trace(@src(), "", .{});
-    defer t.end();
-
     switch (comptime value) {
         .element => |v| {
             const hastext = comptime for (v.children) |x| {
@@ -368,9 +362,6 @@ fn Field(comptime T: type, comptime field_name: string) type {
 }
 
 pub fn writeEscaped(s: string, writer: anytype) !void {
-    const t = tracer.trace(@src(), "", .{});
-    defer t.end();
-
     const view = std.unicode.Utf8View.initUnchecked(s);
     var iter = view.iterator();
     while (nextCodepointSliceLossy(&iter)) |sl| {
@@ -455,9 +446,6 @@ fn contains(haystack: []const string, needle: string) bool {
 }
 
 fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: bool) anyerror!void {
-    const t = tracer.trace(@src(), "", .{});
-    defer t.end();
-
     if (flag2) {
         try do(alloc, writer, top, data, ctx, opts);
     } else {
@@ -466,9 +454,6 @@ fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, c
 }
 
 fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: anytype) anyerror!void {
-    const t = tracer.trace(@src(), "", .{});
-    defer t.end();
-
     if (flag2) |_| {
         try do(alloc, writer, top, data, ctx, opts);
     } else {
