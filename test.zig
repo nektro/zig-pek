@@ -565,7 +565,7 @@ test {
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This url for this link is <a href="https:&sol;&sol;github.com&sol;nektro&sol;zig-pek">dynamic</a>.</p>
+        \\    <p>This url for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
         \\</body>
         \\
     );
@@ -588,7 +588,7 @@ test {
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This host for this link is <a href="https:&sol;&sol;github.com&sol;nektro&sol;zig-pek">dynamic</a>.</p>
+        \\    <p>This host for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
         \\</body>
         \\
     );
@@ -611,7 +611,7 @@ test {
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This host for this link is <a href="https:&sol;&sol;github.com&sol;nektro&sol;zig-pek">dynamic</a>.</p>
+        \\    <p>This host for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
         \\</body>
         \\
     );
@@ -646,7 +646,7 @@ test {
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This host for this link is <a href="https:&sol;&sol;github.com&sol;nektro&sol;zig-pek">dynamic</a>.</p>
+        \\    <p>This host for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
         \\</body>
         \\
     );
@@ -678,7 +678,7 @@ test {
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This host for this link is <a href="https:&sol;&sol;github.com&sol;nektro&sol;zig-pek">dynamic</a>.</p>
+        \\    <p>This host for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
         \\</body>
         \\
     );
