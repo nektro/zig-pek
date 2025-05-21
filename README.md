@@ -1,5 +1,11 @@
 # Pek
 
+![loc](https://sloc.xyz/github/nektro/zig-pek)
+[![license](https://img.shields.io/github/license/nektro/zig-pek.svg)](https://github.com/nektro/zig-pek/blob/master/LICENSE)
+[![nektro @ github sponsors](https://img.shields.io/badge/sponsors-nektro-purple?logo=github)](https://github.com/sponsors/nektro)
+[![Zig](https://img.shields.io/badge/Zig-0.14-f7a41d)](https://ziglang.org/)
+[![Zigmod](https://img.shields.io/badge/Zigmod-latest-f7a41d)](https://github.com/nektro/zigmod)
+
 A comptime HTML preprocessor with a builtin template engine for Zig.
 
 ## Example Document
@@ -20,13 +26,5 @@ html[lang="en"](
 ```
 
 ## Example Usage
-[src/main.zig](src/main.zig)
 
-## Built With
-- [Zig](https://github.com/ziglang/zig) master
-- [Zigmod](https://github.com/nektro/zigmod) package manager
-
-## Add me
-```
-$ zigmod aq add 1/nektro/pek
-```
+See [test.zig](test.zig).
