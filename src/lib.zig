@@ -114,7 +114,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
-            if (TI == .Int or TI == .Float or TI == .ComptimeInt or TI == .ComptimeFloat) {
+            if (TI == .int or TI == .float or TI == .comptime_int or TI == .comptime_float) {
                 try writer.print("{d}", .{x});
                 return;
             }
@@ -135,7 +135,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
-            if (TI == .Enum) {
+            if (TI == .@"enum") {
                 const s = @tagName(x);
                 if (opts.escaped) try writeEscaped(s, writer);
                 if (!opts.escaped) try writer.writeAll(s);
@@ -157,7 +157,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 .@"if" => {
                     if (v.func) |n| {
                         const f = @field(opts.Ctx, "pek_" ++ n);
-                        const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".params.len) {
                             2 => f(alloc, x),
                             3 => blk: {
                                 const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
@@ -179,16 +179,16 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         return;
                     }
                     switch (comptime TI) {
-                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
-                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, x),
-                        .Int => try doif(alloc, writer, body, bottom, data, ctx, opts, x != 0),
+                        .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
+                        .optional => try docap(alloc, writer, body, bottom, data, ctx, opts, x),
+                        .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x != 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
                     if (v.func) |n| {
                         const f = @field(opts.Ctx, "pek_" ++ n);
-                        const x2 = try switch (@typeInfo(@TypeOf(f)).Fn.params.len) {
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".params.len) {
                             2 => f(alloc, x),
                             3 => blk: {
                                 const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
@@ -210,16 +210,16 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                         return;
                     }
                     switch (comptime TI) {
-                        .Bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
-                        .Optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
-                        .Int => try doif(alloc, writer, body, bottom, data, ctx, opts, x == 0),
+                        .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x == 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
-                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime extras.isZigString(@TypeOf(y))) {
+                    if (@typeInfo(@TypeOf(x)) == .@"enum" and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
@@ -230,7 +230,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                 .ifnotequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
-                    if (@typeInfo(@TypeOf(x)) == .Enum and comptime extras.isZigString(@TypeOf(y))) {
+                    if (@typeInfo(@TypeOf(x)) == .@"enum" and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
@@ -338,7 +338,7 @@ fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx),
     if (args[0][0] == '"') return std.mem.trim(u8, args[0], "\"");
     if (comptime std.mem.eql(u8, args[0], "true")) return true;
     if (comptime std.mem.eql(u8, args[0], "false")) return false;
-    if (@typeInfo(@TypeOf(ctx)) == .Optional) return search(args, ctx.?);
+    if (@typeInfo(@TypeOf(ctx)) == .optional) return search(args, ctx.?);
     const f = @field(ctx, args[0]);
     if (args.len == 1) return f;
     return search(args[1..], f);
@@ -356,7 +356,7 @@ fn Field(comptime T: type, comptime field_name: string) type {
         return usize;
     }
     switch (@typeInfo(T)) {
-        .Optional => |info| return Field(info.child, field_name),
+        .optional => |info| return Field(info.child, field_name),
         else => {},
     }
     for (std.meta.fields(T)) |fld| {
@@ -480,7 +480,7 @@ fn isArrayOf(comptime T: type) fn (type) bool {
     const Closure = struct {
         pub fn trait(comptime C: type) bool {
             return switch (@typeInfo(C)) {
-                .Array => |ti| ti.child == T,
+                .array => |ti| ti.child == T,
                 else => false,
             };
         }
