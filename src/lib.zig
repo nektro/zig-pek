@@ -392,6 +392,9 @@ fn nextCodepointSliceLossy(it: *std.unicode.Utf8Iterator) ?[]const u8 {
 
 fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
     switch (cp) {
+        // '<', MUST NOT skip
+        // '<', MUST NOT skip
+        // '"', MUST NOT skip
         '\n',
         '.',
         ':',
@@ -409,6 +412,19 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
         '=',
         '-',
         ';',
+        '#',
+        '{',
+        '}',
+        ',',
+        '*',
+        '!',
+        '\'',
+        '&',
+        '[',
+        ']',
+        '|',
+        '?',
+        '`',
         => return null,
         else => {},
     }

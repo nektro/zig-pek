@@ -272,7 +272,7 @@ test { // string
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This will show up because <code>bar</code> is &apos;foo&apos;.</p>
+        \\    <p>This will show up because <code>bar</code> is 'foo'.</p>
         \\</body>
         \\
     );
@@ -299,7 +299,7 @@ test { // string false
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This will show up because <code>bar</code> is &apos;qux&apos;.</p>
+        \\    <p>This will show up because <code>bar</code> is 'qux'.</p>
         \\</body>
         \\
     );
@@ -436,7 +436,7 @@ test { // string
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This will show up because <code>bar</code> is &apos;qux&apos;.</p>
+        \\    <p>This will show up because <code>bar</code> is 'qux'.</p>
         \\</body>
         \\
     );
@@ -463,7 +463,7 @@ test { // string false
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <p>This will show up because <code>bar</code> is &apos;foo&apos;.</p>
+        \\    <p>This will show up because <code>bar</code> is 'foo'.</p>
         \\</body>
         \\
     );
