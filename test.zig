@@ -1,6 +1,7 @@
 const std = @import("std");
 const pek = @import("pek");
 const expect = @import("expect").expect;
+const extras = @import("extras");
 
 test {
     std.testing.refAllDeclsRecursive(pek);
@@ -894,6 +895,45 @@ test {
         doc,
         .{ .Ctx = @This(), .indent = 0, .flag1 = false },
         .{ .states = &states },
+    );
+    try expect(builder.items).toEqualString(
+        \\<body>
+        \\    <p>The US state 'Massachusetts' can be shortened to 'MA'.</p>
+        \\    <p>The US state 'Oregon' can be shortened to 'OR'.</p>
+        \\    <p>The US state 'California' can be shortened to 'CA'.</p>
+        \\</body>
+        \\
+    );
+}
+
+// multi-each
+test {
+    const alloc = std.testing.allocator;
+    var builder = std.ArrayList(u8).init(alloc);
+    defer builder.deinit();
+    const S = struct {
+        abbr: []const u8,
+        name: []const u8,
+        index: u8,
+    };
+    const states = extras.StaticMultiList(S).initComptime(&[_]S{
+        .{ .abbr = "MA", .name = "Massachusetts", .index = 0 },
+        .{ .abbr = "OR", .name = "Oregon", .index = 0 },
+        .{ .abbr = "CA", .name = "California", .index = 0 },
+    });
+    const doc = comptime pek.parse(
+        \\body(
+        \\    {#each abbrs names}
+        \\    p("The US state '"{that}"' can be shortened to '"{this}"'.")
+        \\    /each/
+        \\)
+    );
+    try pek.compileInner(
+        alloc,
+        builder.writer(),
+        doc,
+        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .abbrs = states.items.abbr, .names = states.items.name },
     );
     try expect(builder.items).toEqualString(
         \\<body>

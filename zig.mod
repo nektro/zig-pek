@@ -10,3 +10,4 @@ dependencies:
 
 root_dependencies:
   - src: git https://github.com/nektro/zig-expect
+  - src: git https://github.com/nektro/zig-extras

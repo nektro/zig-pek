@@ -94,19 +94,12 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
         },
         .replacement => |repl| {
             const v = repl.arms;
-            const x = if (comptime std.mem.eql(u8, v[0], "this")) search(v[1..], data) else search(v, ctx);
+            const x = search(v, ctx);
             const TO = @TypeOf(x);
             const TI = @typeInfo(TO);
 
             if (comptime extras.isZigString(TO)) {
-                if (repl.raw) {
-                    try writer.writeAll(x);
-                    return;
-                }
-                const s = std.mem.trim(u8, x, "\n");
-                if (opts.escaped) try writeEscaped(s, writer);
-                if (!opts.escaped) try writer.writeAll(s);
-                return;
+                return writeReplacementString(writer, repl.raw, opts.escaped, x);
             }
             if (TI == .int or TI == .float or TI == .comptime_int or TI == .comptime_float) {
                 try writer.print("{d}", .{x});
@@ -145,8 +138,25 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
             const TI = @typeInfo(T);
             switch (v.name) {
                 .each => {
-                    comptime assertEqual(v.args.len, 1);
-                    for (x) |item| try do(alloc, writer, body, item, ctx, opts);
+                    switch (v.args.len) {
+                        1 => {
+                            for (x) |item| {
+                                if (@hasField(@TypeOf(ctx), "this")) {
+                                    // handle nested loops, should be temporary
+                                    try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .this = item } }), opts);
+                                } else {
+                                    try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item } }), opts);
+                                }
+                            }
+                        },
+                        2 => {
+                            const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
+                            for (x, y) |item, jtem| {
+                                try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item, .that = jtem } }), opts);
+                            }
+                        },
+                        else => @compileError(std.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
+                    }
                 },
                 .@"if" => {
                     if (v.func) |n| {
@@ -255,9 +265,8 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
-                const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
-                try do(alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
+                try writeReplacementString(writer, v.raw, opts.escaped, try list.toOwnedSlice());
                 return;
             }
             if (v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
@@ -279,9 +288,8 @@ inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.V
                     const field_name = comptime std.fmt.comptimePrint("{d}", .{i});
                     @field(args[3], field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
-                const repvalue = astgen.Value{ .replacement = .{ .arms = &.{"this"}, .raw = v.raw } };
                 try @call(.auto, func, args);
-                try do(alloc, writer, repvalue, try list.toOwnedSlice(), ctx, opts);
+                try writeReplacementString(writer, v.raw, opts.escaped, list.items);
                 return;
             }
             if (v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
@@ -306,7 +314,7 @@ pub const DoOptions = struct {
 fn resolveArg(comptime arg: astgen.Arg, alloc: std.mem.Allocator, data: anytype, ctx: anytype, comptime opts: DoOptions) !ResolveArg(arg, @TypeOf(data), @TypeOf(ctx)) {
     return switch (arg) {
         .plain => |av| av[1 .. av.len - 1],
-        .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) search(av[1..], data) else search(av, ctx),
+        .lookup => |av| search(av, ctx),
         .int => |av| av,
         .value => |av| {
             var list = std.ArrayList(u8).init(alloc);
@@ -319,9 +327,10 @@ fn resolveArg(comptime arg: astgen.Arg, alloc: std.mem.Allocator, data: anytype,
 }
 
 fn ResolveArg(comptime arg: astgen.Arg, comptime This: type, comptime Ctx: type) type {
+    _ = This;
     return switch (arg) {
         .plain => string,
-        .lookup => |av| if (comptime std.mem.eql(u8, av[0], "this")) FieldSearch(This, av[1..]) else FieldSearch(Ctx, av),
+        .lookup => |av| FieldSearch(Ctx, av),
         .int => u64,
         .value => string,
     };
@@ -358,7 +367,8 @@ fn Field(comptime T: type, comptime field_name: string) type {
             return fld.type;
         }
     }
-    @compileError(std.fmt.comptimePrint("pek: unknown field {s} on type {s}", .{ field_name, @typeName(T) }));
+    @compileLog(std.meta.fieldNames(T));
+    _ = @field(@as(T, undefined), field_name);
 }
 
 pub fn writeEscaped(s: string, writer: anytype) !void {
@@ -372,6 +382,16 @@ pub fn writeEscaped(s: string, writer: anytype) !void {
             try writer.writeAll(sl);
         }
     }
+}
+
+fn writeReplacementString(writer: anytype, raw: bool, escaped: bool, bytes: []const u8) !void {
+    if (raw) {
+        try writer.writeAll(bytes);
+        return;
+    }
+    const s = std.mem.trim(u8, bytes, "\n");
+    if (escaped) try writeEscaped(s, writer);
+    if (!escaped) try writer.writeAll(s);
 }
 
 fn nextCodepointSliceLossy(it: *std.unicode.Utf8Iterator) ?[]const u8 {
