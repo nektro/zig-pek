@@ -6,5 +6,9 @@ MIT:
 = https://spdx.org/licenses/MIT
 - git https://github.com/nektro/zig-expect
 - git https://github.com/nektro/zig-extras
+- git https://github.com/nektro/zig-sys-linux
 - git https://github.com/nektro/zig-tracer
 - git https://github.com/kivikakk/htmlentities.zig
+
+Unspecified:
+- system_lib c
