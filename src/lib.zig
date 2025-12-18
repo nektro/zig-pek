@@ -415,6 +415,8 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
         // '<', MUST NOT skip
         // '<', MUST NOT skip
         // '"', MUST NOT skip
+        // '&', MUST NOT skip
+        // ';', MUST NOT skip
         '\n',
         '.',
         ':',
@@ -431,7 +433,6 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
         '_',
         '=',
         '-',
-        ';',
         '#',
         '{',
         '}',
@@ -439,7 +440,6 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
         '*',
         '!',
         '\'',
-        '&',
         '[',
         ']',
         '|',
