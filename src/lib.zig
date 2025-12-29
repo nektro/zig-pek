@@ -13,9 +13,12 @@ const htmlentities = @import("htmlentities");
 const root = @import("root");
 const tracer = @import("tracer");
 const extras = @import("extras");
+const builtin = @import("builtin");
 
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
+
+const callconv_inline: std.builtin.CallingConvention = if (builtin.mode == .Debug) .auto else .@"inline";
 
 pub fn parse(comptime input: string) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
@@ -41,7 +44,7 @@ pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: a
 
 pub const Writer = std.ArrayList(u8).Writer;
 
-inline fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
+fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) callconv(callconv_inline) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = comptime for (v.children) |x| {
