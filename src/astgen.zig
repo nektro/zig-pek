@@ -223,7 +223,7 @@ const Parser = struct {
             if (temp.len == 0 and self.nextIs(.word)) {
                 const next_word = self.eat(.word);
                 if (extras.matchesAll(u8, next_word, std.ascii.isDigit)) {
-                    ret = ret ++ &[_]Arg{.{ .int = std.fmt.parseUnsigned(u64, next_word, 10) catch unreachable }};
+                    ret = ret ++ &[_]Arg{.{ .int = extras.parseDigits(u64, next_word, 10) catch unreachable }};
                     continue;
                 }
                 temp = temp ++ &[_]string{next_word};
