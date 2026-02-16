@@ -50,6 +50,11 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
                     shouldFlush = false;
                     break :blk;
                 }
+                if (c == '\'') {
+                    mode = 2;
+                    shouldFlush = false;
+                    break :blk;
+                }
             }
             if (mode == 1) {
                 if (c == '\n') {

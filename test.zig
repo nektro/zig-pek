@@ -50,6 +50,41 @@ test "document" {
     );
 }
 
+test "apostrophe attribute string" {
+    const alloc = std.testing.allocator;
+    var builder = std.ArrayList(u8).init(alloc);
+    defer builder.deinit();
+    const doc = comptime pek.parse(
+        \\html[lang="en"](
+        \\    head(
+        \\        title("Pek Example")
+        \\        meta[charset="UTF-8"]
+        \\        meta[name="viewport" content="width=device-width,initial-scale=1"]
+        \\        meta[name="htmx-config" content='{"includeIndicatorStyles":false}']
+        \\    )
+        \\)
+    );
+    try pek.compile(
+        @This(),
+        alloc,
+        builder.writer(),
+        doc,
+        .{},
+    );
+    try expect(builder.items).toEqualString(
+        \\<!DOCTYPE html>
+        \\<html lang="en">
+        \\    <head>
+        \\        <title>Pek Example</title>
+        \\        <meta charset="UTF-8" />
+        \\        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        \\        <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
+        \\    </head>
+        \\</html>
+        \\
+    );
+}
+
 test "fragment" {
     const alloc = std.testing.allocator;
     var builder = std.ArrayList(u8).init(alloc);
