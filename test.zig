@@ -65,7 +65,7 @@ test "fragment" {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{},
     );
     try expect(builder.items).toEqualString(
@@ -98,7 +98,7 @@ test "if: basic" {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = false, .bar = true },
     );
     try expect(builder.items).toEqualString(
@@ -129,7 +129,7 @@ test "if else + field access" {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = .{ .qux = false } },
     );
     try expect(builder.items).toEqualString(
@@ -158,7 +158,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
     );
     try expect(builder.items).toEqualString(
@@ -185,7 +185,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
     );
     try expect(builder.items).toEqualString(
@@ -214,7 +214,7 @@ test { // bool
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
     );
     try expect(builder.items).toEqualString(
@@ -241,7 +241,7 @@ test { // bool false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
     );
     try expect(builder.items).toEqualString(
@@ -268,7 +268,7 @@ test { // string
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "foo") },
     );
     try expect(builder.items).toEqualString(
@@ -295,7 +295,7 @@ test { // string false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "qux") },
     );
     try expect(builder.items).toEqualString(
@@ -322,7 +322,7 @@ test { // enum
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .foo) },
     );
     try expect(builder.items).toEqualString(
@@ -349,7 +349,7 @@ test { // enum false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .qux) },
     );
     try expect(builder.items).toEqualString(
@@ -378,7 +378,7 @@ test { // bool
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
     );
     try expect(builder.items).toEqualString(
@@ -405,7 +405,7 @@ test { // bool false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
     );
     try expect(builder.items).toEqualString(
@@ -432,7 +432,7 @@ test { // string
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "qux") },
     );
     try expect(builder.items).toEqualString(
@@ -459,7 +459,7 @@ test { // string false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "foo") },
     );
     try expect(builder.items).toEqualString(
@@ -486,7 +486,7 @@ test { // enum
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .qux) },
     );
     try expect(builder.items).toEqualString(
@@ -513,7 +513,7 @@ test { // enum false
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .foo) },
     );
     try expect(builder.items).toEqualString(
@@ -538,7 +538,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .text = @as([]const u8, "dynamic") },
     );
     try expect(builder.items).toEqualString(
@@ -561,7 +561,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .url = @as([]const u8, "https://github.com/nektro/zig-pek") },
     );
     try expect(builder.items).toEqualString(
@@ -584,7 +584,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = @as([]const u8, "github.com") },
     );
     try expect(builder.items).toEqualString(
@@ -607,7 +607,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = "github.com".* },
     );
     try expect(builder.items).toEqualString(
@@ -642,7 +642,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = S{ .name = "github" } },
     );
     try expect(builder.items).toEqualString(
@@ -674,7 +674,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = S{ .name = "github" } },
     );
     try expect(builder.items).toEqualString(
@@ -699,7 +699,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .url = "https://github.com/nektro/zig-pek".* },
     );
     try expect(builder.items).toEqualString(
@@ -722,7 +722,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = "contain HTML such as <button>this</button> as an escape hatch when you know content is safe".* },
     );
     try expect(builder.items).toEqualString(
@@ -770,16 +770,18 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = C, .indent = 0, .flag1 = false },
+        .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .prev = person },
     );
     try expect(builder.items).toEqualString(
         \\<body>
-        \\    <form><label>
+        \\    <form>
+        \\        <label>
         \\            <div>Name</div>
         \\            <textarea type="text" required="" name="name" placeholder="">meghan</textarea>
         \\        </label>
-        \\<button>Submit ▶</button></form>
+        \\        <button>Submit ▶</button>
+        \\    </form>
         \\</body>
         \\
     );
@@ -816,7 +818,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = C, .indent = 0, .flag1 = false },
+        .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .user = person },
     );
     try expect(builder.items).toEqualString(
@@ -856,7 +858,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = C, .indent = 0, .flag1 = false },
+        .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .user = person },
     );
     try expect(builder.items).toEqualString(
@@ -893,7 +895,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .states = &states },
     );
     try expect(builder.items).toEqualString(
@@ -932,7 +934,7 @@ test {
         alloc,
         builder.writer(),
         doc,
-        .{ .Ctx = @This(), .indent = 0, .flag1 = false },
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .abbrs = states.items.abbr, .names = states.items.name },
     );
     try expect(builder.items).toEqualString(

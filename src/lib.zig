@@ -32,19 +32,29 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
     try do(alloc, writer, value, data, data, .{
         .Ctx = Ctx,
         .indent = 0,
-        .flag1 = false,
+        .doindent = builtin.mode == .Debug,
+        .doindent2 = builtin.mode == .Debug,
     });
-    try writer.writeAll("\n");
 }
 
 pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, comptime opts: DoOptions, data: anytype) !void {
     try do(alloc, writer, value, data, data, opts);
-    try writer.writeAll("\n");
 }
 
 pub const Writer = std.ArrayList(u8).Writer;
 
 fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) callconv(callconv_inline) anyerror!void {
+    comptime var skipindent = false;
+    if (value == .element and comptime std.mem.eql(u8, value.element.name, "pre")) skipindent = true;
+    return doInner(alloc, writer, value, data, ctx, .{
+        .Ctx = opts.Ctx,
+        .indent = opts.indent,
+        .doindent = opts.doindent and !skipindent,
+        .doindent2 = opts.doindent,
+        .escaped = opts.escaped,
+    });
+}
+fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) callconv(callconv_inline) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = comptime for (v.children) |x| {
@@ -53,14 +63,15 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
                     .element, .attr, .block, .body => {},
                 }
             } else false;
+            _ = hastext;
 
-            if (opts.flag1) for (0..opts.indent) |_| try writer.writeAll("    ");
+            if (opts.doindent2) for (0..opts.indent) |_| try writer.writeAll("    ");
             try writer.writeAll("<");
             try writer.writeAll(v.name);
 
             inline for (v.attrs) |it| {
                 switch (comptime it.value) {
-                    .string => try writer.print(" {s}=\"{}\"", .{ it.key, std.zig.fmtEscapes(it.value.string[1 .. it.value.string.len - 1]) }),
+                    .string => try writer.print(" {s}={s}", .{ it.key, it.value.string }),
                     .body => {
                         try writer.print(" {s}=\"", .{it.key});
                         inline for (it.value.body) |bval| try do(alloc, writer, bval, data, ctx, opts);
@@ -71,24 +82,27 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
 
             if (v.children.len == 0) {
                 if (contains(std.meta.fieldNames(HtmlVoidElements), v.name)) {
-                    try writer.writeAll(" />\n");
+                    try writer.writeAll(" />");
+                    if (opts.doindent2) try writer.writeAll("\n");
                 } else {
-                    try writer.print("></{s}>\n", .{v.name});
+                    try writer.print("></{s}>", .{v.name});
+                    if (opts.doindent2) try writer.writeAll("\n");
                 }
             } else {
+                const shouldindent = opts.doindent and v.children[0] != .string and v.children[0] != .replacement;
                 try writer.writeAll(">");
-
-                if (!hastext) try writer.writeAll("\n");
+                if (shouldindent) try writer.writeAll("\n");
                 inline for (v.children) |it| {
                     try do(alloc, writer, it, data, ctx, .{
                         .Ctx = opts.Ctx,
                         .indent = opts.indent + 1,
-                        .flag1 = !hastext,
+                        .doindent = shouldindent,
+                        .doindent2 = opts.doindent2,
                     });
                 }
-                if (!hastext) for (0..opts.indent) |_| try writer.writeAll("    ");
+                if (shouldindent) for (0..opts.indent) |_| try writer.writeAll("    ");
                 try writer.print("</{s}>", .{v.name});
-                if (opts.flag1) try writer.writeAll("\n");
+                if (opts.doindent2) try writer.writeAll("\n");
             }
         },
         .string => |v| {
@@ -253,13 +267,10 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             }
         },
         .function => |v| {
-            var arena = std.heap.ArenaAllocator.init(alloc);
-            defer arena.deinit();
-
             if (!v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
                 const func = @field(opts.Ctx, "pek_" ++ v.name);
-                var list = std.ArrayList(u8).init(arena.allocator());
-                errdefer list.deinit();
+                var list = std.ArrayList(u8).init(alloc);
+                defer list.deinit();
                 var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
                 comptime std.debug.assert(args.len - 2 == v.args.len);
                 args.@"0" = alloc;
@@ -274,8 +285,8 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
             }
             if (v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
-                var list = std.ArrayList(u8).init(arena.allocator());
-                errdefer list.deinit();
+                var list = std.ArrayList(u8).init(alloc);
+                defer list.deinit();
                 const AT = std.meta.ArgsTuple(@TypeOf(func));
                 const ATT = std.meta.fieldInfo(AT, .@"3").type;
                 if (v.args.len != std.meta.fields(ATT).len) @compileError(std.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
@@ -310,7 +321,8 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
 pub const DoOptions = struct {
     Ctx: type,
     indent: usize,
-    flag1: bool,
+    doindent: bool,
+    doindent2: bool,
     escaped: bool = true,
 };
 
