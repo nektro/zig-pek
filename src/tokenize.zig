@@ -32,6 +32,7 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
     var mode = 0;
 
     @setEvalBranchQuota(1000000);
+    if (!@inComptime()) @compileError("must be at comptime!");
 
     inline for (input, 0..) |c, i| {
         const s = &[_]u8{c};
