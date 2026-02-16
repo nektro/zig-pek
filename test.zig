@@ -716,6 +716,31 @@ test {
         \\
     );
 }
+test {
+    const alloc = std.testing.allocator;
+    var builder = std.ArrayList(u8).init(alloc);
+    defer builder.deinit();
+    const S = struct { x: []const u8, y: u32 };
+    const text: S = .{ .x = "dynamic", .y = 47 };
+    const doc = comptime pek.parse(
+        \\body(
+        \\    p("This text for this link is "a[href="https://github.com/nektro/zig-pek"]({text.x})".")
+        \\)
+    );
+    try pek.compileInner(
+        alloc,
+        builder.writer(),
+        doc,
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
+        .{ .text = &text },
+    );
+    try expect(builder.items).toEqualString(
+        \\<body>
+        \\    <p>This text for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
+        \\</body>
+        \\
+    );
+}
 
 // replacement with custom serializer
 test {

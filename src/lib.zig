@@ -375,6 +375,7 @@ fn Field(comptime T: type, comptime field_name: string) type {
     }
     switch (@typeInfo(T)) {
         .optional => |info| return Field(info.child, field_name),
+        .pointer => |info| return Field(info.child, field_name),
         else => {},
     }
     for (std.meta.fields(T)) |fld| {
