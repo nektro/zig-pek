@@ -146,6 +146,41 @@ test "if: basic" {
     );
 }
 
+test "if: optional" {
+    const alloc = std.testing.allocator;
+    var builder = std.ArrayList(u8).init(alloc);
+    defer builder.deinit();
+    const foo: ?u8 = null;
+    const bar: ?u8 = 24;
+    const doc = comptime pek.parse(
+        \\body(
+        \\    h1("Pek Example")
+        \\    hr
+        \\    {#if foo}
+        \\    p("This is an example HTML document written in "a[href="https://github.com/nektro/zig-pek"]("Pek")".")
+        \\    /if/
+        \\    {#if bar}
+        \\    p("This will show up because "code("bar")" is non-null instead.")
+        \\    /if/
+        \\)
+    );
+    try pek.compileInner(
+        alloc,
+        builder.writer(),
+        doc,
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
+        .{ .foo = foo, .bar = bar },
+    );
+    try expect(builder.items).toEqualString(
+        \\<body>
+        \\    <h1>Pek Example</h1>
+        \\    <hr />
+        \\    <p>This will show up because <code>bar</code> is non-null instead.</p>
+        \\</body>
+        \\
+    );
+}
+
 // if else
 test "if else + field access" {
     const alloc = std.testing.allocator;
@@ -226,6 +261,35 @@ test {
     try expect(builder.items).toEqualString(
         \\<body>
         \\    <p>This will show up because <code>bar</code> is false.</p>
+        \\</body>
+        \\
+    );
+}
+// ifnot optional
+test {
+    const alloc = std.testing.allocator;
+    var builder = std.ArrayList(u8).init(alloc);
+    defer builder.deinit();
+    const foo: ?u8 = null;
+    const doc = comptime pek.parse(
+        \\body(
+        \\    {#ifnot foo}
+        \\    p("This will show up because "code("foo")" is null.")
+        \\    <else>
+        \\    p("This will show up because "code("foo")" is non-null.")
+        \\    /ifnot/
+        \\)
+    );
+    try pek.compileInner(
+        alloc,
+        builder.writer(),
+        doc,
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
+        .{ .foo = foo },
+    );
+    try expect(builder.items).toEqualString(
+        \\<body>
+        \\    <p>This will show up because <code>foo</code> is null.</p>
         \\</body>
         \\
     );

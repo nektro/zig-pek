@@ -201,7 +201,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     }
                     switch (comptime TI) {
                         .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
-                        .optional => try docap(alloc, writer, body, bottom, data, ctx, opts, x),
+                        .optional => try doif(alloc, writer, body, bottom, data, ctx, opts, x != null),
                         .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x != 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
@@ -232,7 +232,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     }
                     switch (comptime TI) {
                         .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
-                        .optional => try docap(alloc, writer, body, bottom, data, ctx, opts, !x),
+                        .optional => try doif(alloc, writer, body, bottom, data, ctx, opts, x == null),
                         .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x == 0),
                         else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
@@ -506,14 +506,6 @@ fn contains(haystack: []const string, needle: string) bool {
 
 fn doif(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: bool) anyerror!void {
     if (flag2) {
-        try do(alloc, writer, top, data, ctx, opts);
-    } else {
-        try do(alloc, writer, bottom, data, ctx, opts);
-    }
-}
-
-fn docap(alloc: std.mem.Allocator, writer: anytype, comptime top: astgen.Value, comptime bottom: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions, flag2: anytype) anyerror!void {
-    if (flag2) |_| {
         try do(alloc, writer, top, data, ctx, opts);
     } else {
         try do(alloc, writer, bottom, data, ctx, opts);
