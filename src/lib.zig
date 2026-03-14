@@ -122,13 +122,6 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 try writer.print("{d}", .{x});
                 return;
             }
-            if (comptime extras.hasFn("format")(TO)) {
-                return std.fmt.format(writer, "{}", .{x});
-            }
-            if (comptime extras.hasFn("toString")(TO)) {
-                try writer.writeAll(try x.toString(alloc));
-                return;
-            }
             if (comptime isArrayOf(u8)(TO)) {
                 if (repl.raw) {
                     try writer.writeAll(&x);
@@ -145,7 +138,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
-            @compileError(std.fmt.comptimePrint("pek: print {s}: unsupported type: {s}", .{ v, @typeName(TO) }));
+            return x.nprint(writer);
         },
         .block => |v| {
             const body = astgen.Value{ .body = v.body };
