@@ -236,6 +236,9 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     if (@typeInfo(@TypeOf(x)) == .@"enum" and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
+                    if (TI == .@"enum" and @typeInfo(@TypeOf(y)) == .int) {
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, @intFromEnum(x) == y);
+                    }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, x, y));
                     }
@@ -249,6 +252,9 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
                     if (@typeInfo(@TypeOf(x)) == .@"enum" and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
+                    }
+                    if (TI == .@"enum" and @typeInfo(@TypeOf(y)) == .int) {
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, @intFromEnum(x) != y);
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, x, y));
