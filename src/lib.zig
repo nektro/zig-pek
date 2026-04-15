@@ -239,6 +239,9 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, x, y));
                     }
+                    if (@typeInfo(@TypeOf(x)) == .@"struct") {
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, x.eql(y));
+                    }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x == y);
                 },
                 .ifnotequal => {
@@ -249,6 +252,9 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, x, y));
+                    }
+                    if (@typeInfo(@TypeOf(x)) == .@"struct") {
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, !x.eql(y));
                     }
                     try doif(alloc, writer, body, bottom, data, ctx, opts, x != y);
                 },
