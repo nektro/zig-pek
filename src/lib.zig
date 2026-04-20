@@ -138,6 +138,12 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
+            if (TI == .bool) {
+                const s = if (x) "true" else "false";
+                if (opts.escaped) try writeEscaped(s, writer);
+                if (!opts.escaped) try writer.writeAll(s);
+                return;
+            }
             return x.nprint(writer);
         },
         .block => |v| {
