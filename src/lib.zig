@@ -158,8 +158,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         1 => {
                             for (x) |item| {
                                 if (@hasField(@TypeOf(ctx), "this")) {
-                                    // handle nested loops, should be temporary
-                                    try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .this = item } }), opts);
+                                    try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .@"^this" = ctx.this, .this = item } }), opts);
                                 } else {
                                     try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item } }), opts);
                                 }
