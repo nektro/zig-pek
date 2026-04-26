@@ -747,46 +747,12 @@ test {
     const S = struct {
         name: []const u8,
 
-        pub fn format(s: @This(), comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-            _ = fmt;
-            _ = options;
+        pub fn nprint(s: @This(), writer: anytype) !void {
             try writer.writeAll(s.name);
             try writer.writeAll(".com");
         }
     };
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
-    defer builder.deinit();
-    const doc = comptime pek.parse(
-        \\body(
-        \\    p("This host for this link is "a[href=("https://"{host}"/nektro/zig-pek")]("dynamic")".")
-        \\)
-    );
-    try pek.compileInner(
-        alloc,
-        builder.writer(),
-        doc,
-        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
-        .{ .host = S{ .name = "github" } },
-    );
-    try expect(builder.items).toEqualString(
-        \\<body>
-        \\    <p>This host for this link is <a href="https://github.com/nektro/zig-pek">dynamic</a>.</p>
-        \\</body>
-        \\
-    );
-}
-test {
-    const S = struct {
-        name: []const u8,
-
-        pub fn toString(s: @This(), alloc: std.mem.Allocator) ![]const u8 {
-            return std.fmt.allocPrint(alloc, "{s}.com", .{s.name});
-        }
-    };
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-    const alloc = arena.allocator();
     var builder = std.ArrayList(u8).init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
