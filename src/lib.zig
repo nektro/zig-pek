@@ -250,11 +250,18 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 .ifequal => {
                     comptime assertEqual(v.args.len, 2);
                     const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
+                    const Y = @TypeOf(y);
                     if (@typeInfo(@TypeOf(x)) == .@"enum" and comptime extras.isZigString(@TypeOf(y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
                     if (TI == .@"enum" and @typeInfo(@TypeOf(y)) == .int) {
                         return doif(alloc, writer, body, bottom, data, ctx, opts, @intFromEnum(x) == y);
+                    }
+                    if (TI == .@"union" and comptime extras.isZigString(Y)) {
+                        const tag = std.meta.stringToEnum(TI.@"union".tag_type.?, y) orelse {
+                            return doif(alloc, writer, body, bottom, data, ctx, opts, false);
+                        };
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, x == tag);
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, x, y));
