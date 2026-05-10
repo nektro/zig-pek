@@ -81,7 +81,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             }
 
             if (v.children.len == 0) {
-                if (contains(std.meta.fieldNames(HtmlVoidElements), v.name)) {
+                if (contains(std.meta.fieldNames(HtmlVoidElement), v.name)) {
                     try writer.writeAll(" />");
                     if (opts.doindent2) try writer.writeAll("\n");
                 } else {
@@ -489,7 +489,7 @@ fn assertEqual(comptime a: usize, comptime b: usize) void {
     if (a != b) @compileError(std.fmt.comptimePrint("{d} != {d}", .{ a, b }));
 }
 
-const HtmlVoidElements = enum {
+const HtmlVoidElement = enum {
     area,
     base,
     br,
