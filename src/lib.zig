@@ -14,6 +14,7 @@ const root = @import("root");
 const tracer = @import("tracer");
 const extras = @import("extras");
 const builtin = @import("builtin");
+const nio = @import("nio");
 
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
@@ -182,7 +183,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                                 try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item, .that = jtem } }), opts);
                             }
                         },
-                        else => @compileError(std.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
+                        else => @compileError(nio.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
                     }
                 },
                 .@"if" => {
@@ -213,7 +214,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, x),
                         .optional => try doif(alloc, writer, body, bottom, data, ctx, opts, x != null),
                         .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x != 0),
-                        else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
+                        else => @compileError(nio.fmt.comptimePrint("pek: unable to use '{s}' in an #if block", .{@typeName(T)})),
                     }
                 },
                 .ifnot => {
@@ -244,7 +245,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         .bool => try doif(alloc, writer, body, bottom, data, ctx, opts, !x),
                         .optional => try doif(alloc, writer, body, bottom, data, ctx, opts, x == null),
                         .int => try doif(alloc, writer, body, bottom, data, ctx, opts, x == 0),
-                        else => @compileError(std.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
+                        else => @compileError(nio.fmt.comptimePrint("pek: unable to use '{s}' in an #ifnot block", .{@typeName(T)})),
                     }
                 },
                 .ifequal => {
@@ -305,7 +306,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 args.@"0" = alloc;
                 args.@"1" = list.writer();
                 inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i + 2});
+                    const field_name = comptime nio.fmt.comptimePrint("{d}", .{i + 2});
                     @field(args, field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
                 try @call(.auto, func, args);
@@ -318,7 +319,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 defer list.deinit();
                 const AT = std.meta.ArgsTuple(@TypeOf(func));
                 const ATT = std.meta.fieldInfo(AT, .@"3").type;
-                if (v.args.len != std.meta.fields(ATT).len) @compileError(std.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
+                if (v.args.len != std.meta.fields(ATT).len) @compileError(nio.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
                 var tupargs = @as(ATT, undefined);
                 _ = &tupargs;
                 var args = .{
@@ -328,7 +329,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     tupargs,
                 };
                 inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime std.fmt.comptimePrint("{d}", .{i});
+                    const field_name = comptime nio.fmt.comptimePrint("{d}", .{i});
                     @field(args[3], field_name) = try resolveArg(arg, alloc, data, ctx, opts);
                 }
                 try @call(.auto, func, args);
@@ -505,7 +506,7 @@ fn isCodepointAnEntity(cp: u21) ?htmlentities.Entity {
 }
 
 fn assertEqual(comptime a: usize, comptime b: usize) void {
-    if (a != b) @compileError(std.fmt.comptimePrint("{d} != {d}", .{ a, b }));
+    if (a != b) @compileError(nio.fmt.comptimePrint("{d} != {d}", .{ a, b }));
 }
 
 const HtmlVoidElement = enum {
