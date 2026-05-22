@@ -301,15 +301,11 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 const func = @field(opts.Ctx, "pek_" ++ v.name);
                 var list = std.ArrayList(u8).init(alloc);
                 defer list.deinit();
-                var args: std.meta.ArgsTuple(@TypeOf(func)) = undefined;
-                comptime std.debug.assert(args.len - 2 == v.args.len);
-                args.@"0" = alloc;
-                args.@"1" = list.writer();
-                inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime nio.fmt.comptimePrint("{d}", .{i + 2});
-                    @field(args, field_name) = try resolveArg(arg, alloc, data, ctx, opts);
-                }
-                try @call(.auto, func, args);
+                comptime var types: [v.args.len]type = @splat(void);
+                inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
+                var args: std.meta.Tuple(&types) = undefined;
+                inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
+                try @call(.auto, func, .{ alloc, list.writer() } ++ args);
                 try writeReplacementString(writer, v.raw, opts.escaped, try list.toOwnedSlice());
                 return;
             }
@@ -317,22 +313,18 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
                 var list = std.ArrayList(u8).init(alloc);
                 defer list.deinit();
-                const AT = std.meta.ArgsTuple(@TypeOf(func));
-                const ATT = std.meta.fieldInfo(AT, .@"3").type;
-                if (v.args.len != std.meta.fields(ATT).len) @compileError(nio.fmt.comptimePrint("expected:{d} - actual:{d}", .{ std.meta.fields(ATT).len, v.args.len }));
-                var tupargs = @as(ATT, undefined);
-                _ = &tupargs;
-                var args = .{
-                    alloc,
-                    list.writer(),
-                    opts,
-                    tupargs,
-                };
-                inline for (v.args, 0..) |arg, i| {
-                    const field_name = comptime nio.fmt.comptimePrint("{d}", .{i});
-                    @field(args[3], field_name) = try resolveArg(arg, alloc, data, ctx, opts);
+                const Tup = @typeInfo(@TypeOf(func)).@"fn".params[3].type.?;
+                if (@typeInfo(Tup).@"struct".fields.len == 0) {
+                    // edge case branch because 'struct {}' is counted as a non-tuple
+                    try @call(.auto, func, .{ alloc, list.writer(), opts, Tup{} });
+                    try writeReplacementString(writer, v.raw, opts.escaped, list.items);
+                    return;
                 }
-                try @call(.auto, func, args);
+                comptime var types: [v.args.len]type = @splat(void);
+                inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
+                var args: std.meta.Tuple(&types) = undefined;
+                inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
+                try @call(.auto, func, .{ alloc, list.writer(), opts, args });
                 try writeReplacementString(writer, v.raw, opts.escaped, list.items);
                 return;
             }
