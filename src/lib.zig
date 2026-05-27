@@ -108,7 +108,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 inline for (v.children) |it| {
                     try do(alloc, writer, it, data, ctx, .{
                         .Ctx = opts.Ctx,
-                        .indent = opts.indent + 1,
+                        .indent = if (shouldindent) opts.indent + 1 else opts.indent,
                         .doindent = shouldindent,
                         .doindent2 = opts.doindent2,
                     });
