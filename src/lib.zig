@@ -19,8 +19,6 @@ const nio = @import("nio");
 const tokenize = @import("./tokenize.zig");
 const astgen = @import("./astgen.zig");
 
-const callconv_inline: std.builtin.CallingConvention = if (builtin.mode == .Debug) .auto else .@"inline";
-
 pub fn parse(comptime input: string) astgen.Value {
     return astgen.Value{ .element = astgen.do(tokenize.do(input, &.{ '[', '=', ']', '(', ')', '{', '}', '#', '/', '.', '<', '>' })) };
 }
@@ -44,7 +42,7 @@ pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: a
 
 pub const Writer = std.ArrayList(u8).Writer;
 
-fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) callconv(callconv_inline) anyerror!void {
+fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
     comptime var skipindent = false;
     if (value == .element and comptime std.mem.eql(u8, value.element.name, "pre")) skipindent = true;
     return doInner(alloc, writer, value, data, ctx, .{
@@ -55,7 +53,7 @@ fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, d
         .escaped = opts.escaped,
     });
 }
-fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) callconv(callconv_inline) anyerror!void {
+fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
     switch (comptime value) {
         .element => |v| {
             const hastext = comptime for (v.children) |x| {
