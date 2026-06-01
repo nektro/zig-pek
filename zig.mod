@@ -4,7 +4,7 @@ main: src/lib.zig
 license: MPL-2.0
 description: An HTML preprocessor with a builtin template engine.
 dependencies:
-  - src: git https://github.com/kivikakk/htmlentities.zig commit-bd5d569a245c7c8e83812eadcb5761b7ba76ef04
+  - src: git https://github.com/nektro/zig-htmlentities
   - src: git https://github.com/nektro/zig-extras
   - src: git https://github.com/nektro/zig-tracer
   - src: git https://github.com/nektro/zig-nio
@@ -12,3 +12,4 @@ dependencies:
 root_dependencies:
   - src: git https://github.com/nektro/zig-expect
   - src: git https://github.com/nektro/zig-extras
+  - src: git https://github.com/nektro/zig-nio

@@ -2,6 +2,7 @@ const std = @import("std");
 const pek = @import("pek");
 const expect = @import("expect").expect;
 const extras = @import("extras");
+const nio = @import("nio");
 
 test {
     std.testing.refAllDeclsRecursive(pek);
@@ -9,7 +10,7 @@ test {
 
 test "document" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\html[lang="en"](
@@ -28,7 +29,7 @@ test "document" {
     try pek.compile(
         @This(),
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{},
     );
@@ -52,7 +53,7 @@ test "document" {
 
 test "apostrophe attribute string" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\html[lang="en"](
@@ -67,7 +68,7 @@ test "apostrophe attribute string" {
     try pek.compile(
         @This(),
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{},
     );
@@ -87,7 +88,7 @@ test "apostrophe attribute string" {
 
 test "fragment" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -98,7 +99,7 @@ test "fragment" {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{},
@@ -115,7 +116,7 @@ test "fragment" {
 
 test "if: basic" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -131,7 +132,7 @@ test "if: basic" {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = false, .bar = true },
@@ -148,7 +149,7 @@ test "if: basic" {
 
 test "if: optional" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const foo: ?u8 = null;
     const bar: ?u8 = 24;
@@ -166,7 +167,7 @@ test "if: optional" {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = foo, .bar = bar },
@@ -184,7 +185,7 @@ test "if: optional" {
 // if else
 test "if else + field access" {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -197,7 +198,7 @@ test "if else + field access" {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = .{ .qux = false } },
@@ -213,7 +214,7 @@ test "if else + field access" {
 // ifnot
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -226,7 +227,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
@@ -240,7 +241,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -253,7 +254,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
@@ -268,7 +269,7 @@ test {
 // ifnot optional
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const foo: ?u8 = null;
     const doc = comptime pek.parse(
@@ -282,7 +283,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = foo },
@@ -298,7 +299,7 @@ test {
 // ifequal
 test { // bool
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -311,7 +312,7 @@ test { // bool
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
@@ -325,7 +326,7 @@ test { // bool
 }
 test { // bool false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -338,7 +339,7 @@ test { // bool false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
@@ -352,7 +353,7 @@ test { // bool false
 }
 test { // string
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -365,7 +366,7 @@ test { // string
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "foo") },
@@ -379,7 +380,7 @@ test { // string
 }
 test { // string false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -392,7 +393,7 @@ test { // string false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "qux") },
@@ -406,7 +407,7 @@ test { // string false
 }
 test { // enum
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -419,7 +420,7 @@ test { // enum
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .foo) },
@@ -433,7 +434,7 @@ test { // enum
 }
 test { // enum false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -446,7 +447,7 @@ test { // enum false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .qux) },
@@ -462,7 +463,7 @@ test { // enum false
 // ifnotequal
 test { // bool
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -475,7 +476,7 @@ test { // bool
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = false },
@@ -489,7 +490,7 @@ test { // bool
 }
 test { // bool false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -502,7 +503,7 @@ test { // bool false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = true },
@@ -516,7 +517,7 @@ test { // bool false
 }
 test { // string
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -529,7 +530,7 @@ test { // string
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "qux") },
@@ -543,7 +544,7 @@ test { // string
 }
 test { // string false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -556,7 +557,7 @@ test { // string false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as([]const u8, "foo") },
@@ -570,7 +571,7 @@ test { // string false
 }
 test { // enum
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -583,7 +584,7 @@ test { // enum
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .qux) },
@@ -597,7 +598,7 @@ test { // enum
 }
 test { // enum false
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -610,7 +611,7 @@ test { // enum false
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .bar = @as(enum { foo, bar, qux }, .foo) },
@@ -626,7 +627,7 @@ test { // enum false
 // replacement
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -635,7 +636,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .text = @as([]const u8, "dynamic") },
@@ -649,7 +650,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -658,7 +659,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .url = @as([]const u8, "https://github.com/nektro/zig-pek") },
@@ -672,7 +673,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -681,7 +682,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = @as([]const u8, "github.com") },
@@ -695,7 +696,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -704,7 +705,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = "github.com".* },
@@ -718,7 +719,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const S = struct { x: []const u8, y: u32 };
     const text: S = .{ .x = "dynamic", .y = 47 };
@@ -729,7 +730,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .text = &text },
@@ -753,7 +754,7 @@ test {
         }
     };
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -762,7 +763,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .host = S{ .name = "github" } },
@@ -778,7 +779,7 @@ test {
 // raw replacement
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -787,7 +788,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .url = "https://github.com/nektro/zig-pek".* },
@@ -801,7 +802,7 @@ test {
 }
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const doc = comptime pek.parse(
         \\body(
@@ -810,7 +811,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .foo = "contain HTML such as <button>this</button> as an escape hatch when you know content is safe".* },
@@ -844,7 +845,7 @@ test {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     var person: struct { name: []const u8 } = .{ .name = "meghan" };
     _ = &person;
@@ -858,7 +859,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .prev = person },
@@ -891,7 +892,7 @@ test {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     var person: S = .{ .id = 0 };
     _ = &person;
@@ -906,7 +907,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .user = person },
@@ -931,7 +932,7 @@ test {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     var person: S = .{ .id = 25 };
     _ = &person;
@@ -946,7 +947,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = C, .indent = 0, .doindent = true, .doindent2 = true },
         .{ .user = person },
@@ -962,7 +963,7 @@ test {
 // each
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const S = struct {
         abbr: []const u8,
@@ -983,7 +984,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .states = &states },
@@ -1001,7 +1002,7 @@ test {
 // multi-each
 test {
     const alloc = std.testing.allocator;
-    var builder = std.ArrayList(u8).init(alloc);
+    var builder = nio.AllocatingWriter.init(alloc);
     defer builder.deinit();
     const S = struct {
         abbr: []const u8,
@@ -1022,7 +1023,7 @@ test {
     );
     try pek.compileInner(
         alloc,
-        builder.writer(),
+        &builder,
         doc,
         .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
         .{ .abbrs = states.items.abbr, .names = states.items.name },
