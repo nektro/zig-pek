@@ -5,7 +5,10 @@ const extras = @import("extras");
 const nio = @import("nio");
 
 test {
-    std.testing.refAllDeclsRecursive(pek);
+    const doc = comptime pek.parse(
+        \\html[lang="en"]()
+    );
+    _ = try pek.compile(struct {}, std.testing.allocator, nio.NullWriter{}, doc, {});
 }
 
 test "document" {
