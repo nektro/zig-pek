@@ -295,7 +295,8 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             }
         },
         .function => |v| {
-            if (!v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
+            if (!v.raw) {
+                if (@hasDecl(opts.Ctx, "pek__" ++ v.name)) @compileError("pek: attempted to call raw custom function: '_" ++ v.name ++ "' but did not use '{#" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek_" ++ v.name);
                 var list = std.Io.Writer.Allocating.init(alloc);
                 defer list.deinit();
@@ -307,7 +308,8 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 try writeReplacementString(writer, v.raw, opts.escaped, try list.toOwnedSlice());
                 return;
             }
-            if (v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
+            if (v.raw) {
+                if (@hasDecl(opts.Ctx, "pek_" ++ v.name)) @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
                 var list = std.Io.Writer.Allocating.init(alloc);
                 defer list.deinit();
@@ -326,13 +328,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 try writeReplacementString(writer, v.raw, opts.escaped, list.written());
                 return;
             }
-            if (v.raw and @hasDecl(opts.Ctx, "pek_" ++ v.name)) {
-                @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
-            }
-            if (!v.raw and @hasDecl(opts.Ctx, "pek__" ++ v.name)) {
-                @compileError("pek: attempted to call raw custom function: '_" ++ v.name ++ "' but did not use '{#" ++ v.name ++ "}'");
-            }
-            @compileError("pek: unknown custom function: " ++ v.name);
+            comptime unreachable;
         },
         else => unreachable,
     }
