@@ -64,7 +64,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             } else false;
             _ = hastext;
 
-            if (std.mem.eql(u8, v.name, "_")) {
+            if (comptime std.mem.eql(u8, v.name, "_")) {
                 inline for (v.children) |it| {
                     try do(alloc, writer, it, data, ctx, .{
                         .Ctx = opts.Ctx,
