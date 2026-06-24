@@ -155,6 +155,11 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 if (!opts.escaped) try writer.writeAll(s);
                 return;
             }
+            if (TI == .optional) {
+                if (comptime extras.isZigString(std.meta.Child(TO))) {
+                    return writeReplacementString(writer, repl.raw, opts.escaped, x.?);
+                }
+            }
             return x.nprint(writer);
         },
         .block => |v| {
