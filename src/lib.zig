@@ -382,7 +382,9 @@ fn FieldSearch(comptime T: type, comptime args: []const string) type {
     if (args.len > 0 and args[0][0] == '"') return string;
     if (args.len > 0 and std.mem.eql(u8, args[0], "true")) return bool;
     if (args.len > 0 and std.mem.eql(u8, args[0], "false")) return bool;
-    return if (args.len == 0) T else if (args.len == 1) Field(T, args[0]) else FieldSearch(Field(T, args[0]), args[1..]);
+    if (args.len == 0) return T;
+    if (args.len == 1) return Field(T, args[0]);
+    return FieldSearch(Field(T, args[0]), args[1..]);
 }
 
 fn Field(comptime T: type, comptime field_name: string) type {
