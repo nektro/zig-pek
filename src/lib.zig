@@ -40,7 +40,7 @@ pub fn compileInner(alloc: std.mem.Allocator, writer: anytype, comptime value: a
     try do(alloc, writer, value, data, data, opts);
 }
 
-pub const Writer = *std.Io.Writer;
+pub const Writer = *nio.AllocatingWriter;
 
 fn do(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Value, data: anytype, ctx: anytype, comptime opts: DoOptions) anyerror!void {
     comptime var skipindent = false;
@@ -303,34 +303,34 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             if (!v.raw) {
                 if (@hasDecl(opts.Ctx, "pek__" ++ v.name)) @compileError("pek: attempted to call raw custom function: '_" ++ v.name ++ "' but did not use '{#" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek_" ++ v.name);
-                var list = std.Io.Writer.Allocating.init(alloc);
+                var list: nio.AllocatingWriter = .init(alloc);
                 defer list.deinit();
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
                 var args: std.meta.Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
-                try @call(.auto, func, .{ alloc, &list.writer } ++ args);
-                try writeReplacementString(writer, v.raw, opts.escaped, try list.toOwnedSlice());
+                try @call(.auto, func, .{ alloc, &list } ++ args);
+                try writeReplacementString(writer, v.raw, opts.escaped, list.items);
                 return;
             }
             if (v.raw) {
                 if (@hasDecl(opts.Ctx, "pek_" ++ v.name)) @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
-                var list = std.Io.Writer.Allocating.init(alloc);
+                var list: nio.AllocatingWriter = .init(alloc);
                 defer list.deinit();
                 const Tup = @typeInfo(@TypeOf(func)).@"fn".params[3].type.?;
                 if (@typeInfo(Tup).@"struct".fields.len == 0) {
                     // edge case branch because 'struct {}' is counted as a non-tuple
-                    try @call(.auto, func, .{ alloc, &list.writer, opts, Tup{} });
-                    try writeReplacementString(writer, v.raw, opts.escaped, list.written());
+                    try @call(.auto, func, .{ alloc, &list, opts, Tup{} });
+                    try writeReplacementString(writer, v.raw, opts.escaped, list.items);
                     return;
                 }
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
                 var args: std.meta.Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
-                try @call(.auto, func, .{ alloc, &list.writer, opts, args });
-                try writeReplacementString(writer, v.raw, opts.escaped, list.written());
+                try @call(.auto, func, .{ alloc, &list, opts, args });
+                try writeReplacementString(writer, v.raw, opts.escaped, list.items);
                 return;
             }
             comptime unreachable;
@@ -353,11 +353,11 @@ fn resolveArg(comptime arg: astgen.Arg, alloc: std.mem.Allocator, data: anytype,
         .lookup => |av| search(av, ctx),
         .int => |av| av,
         .value => |av| {
-            var list = std.Io.Writer.Allocating.init(alloc);
+            var list: nio.AllocatingWriter = .init(alloc);
             comptime var newopts = opts;
             newopts.escaped = false;
-            try do(alloc, &list.writer, astgen.Value{ .body = av }, data, ctx, newopts);
-            return list.written();
+            try do(alloc, &list, astgen.Value{ .body = av }, data, ctx, newopts);
+            return list.items;
         },
     };
 }
