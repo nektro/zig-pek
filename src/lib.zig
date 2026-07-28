@@ -92,7 +92,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             }
 
             if (v.children.len == 0) {
-                if (contains(std.meta.fieldNames(HtmlVoidElement), v.name)) {
+                if (comptime contains(std.meta.fieldNames(HtmlVoidElement), v.name)) {
                     try writer.writeAll(">");
                     if (opts.doindent2) try writer.writeAll("\n");
                 } else {
