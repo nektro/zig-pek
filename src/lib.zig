@@ -127,17 +127,15 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             const TI = @typeInfo(TO);
 
             if (comptime extras.isZigString(TO)) {
-                return writeReplacementString(writer, repl.raw, opts.escaped, x);
+                if (repl.raw) return writer.writeAll(x);
+                return writeReplacementString(writer, opts.escaped, x);
             }
             if (TI == .int or TI == .float or TI == .comptime_int or TI == .comptime_float) {
                 try writer.print("{d}", .{x});
                 return;
             }
             if (comptime isArrayOf(u8)(TO)) {
-                if (repl.raw) {
-                    try writer.writeAll(&x);
-                    return;
-                }
+                if (repl.raw) return writer.writeAll(&x);
                 const s = std.mem.trim(u8, &x, "\n");
                 if (opts.escaped) try writeEscaped(s, writer);
                 if (!opts.escaped) try writer.writeAll(s);
@@ -157,7 +155,8 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             }
             if (TI == .optional) {
                 if (comptime extras.isZigString(std.meta.Child(TO))) {
-                    return writeReplacementString(writer, repl.raw, opts.escaped, x.?);
+                    if (repl.raw) return writer.writeAll(x.?);
+                    return writeReplacementString(writer, opts.escaped, x.?);
                 }
             }
             return x.nprint(writer);
@@ -310,27 +309,23 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 var args: std.meta.Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
                 try @call(.auto, func, .{ alloc, &list } ++ args);
-                try writeReplacementString(writer, v.raw, opts.escaped, list.items);
+                try writeReplacementString(writer, opts.escaped, list.items);
                 return;
             }
             if (v.raw) {
                 if (@hasDecl(opts.Ctx, "pek_" ++ v.name)) @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
-                var list: nio.AllocatingWriter = .init(alloc);
-                defer list.deinit();
                 const Tup = @typeInfo(@TypeOf(func)).@"fn".params[3].type.?;
                 if (@typeInfo(Tup).@"struct".fields.len == 0) {
                     // edge case branch because 'struct {}' is counted as a non-tuple
-                    try @call(.auto, func, .{ alloc, &list, opts, Tup{} });
-                    try writeReplacementString(writer, v.raw, opts.escaped, list.items);
+                    try @call(.auto, func, .{ alloc, writer, opts, Tup{} });
                     return;
                 }
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
                 var args: std.meta.Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
-                try @call(.auto, func, .{ alloc, &list, opts, args });
-                try writeReplacementString(writer, v.raw, opts.escaped, list.items);
+                try @call(.auto, func, .{ alloc, writer, opts, args });
                 return;
             }
             comptime unreachable;
@@ -423,11 +418,7 @@ pub fn writeEscaped(s: string, writer: anytype) !void {
     }
 }
 
-fn writeReplacementString(writer: anytype, raw: bool, escaped: bool, bytes: []const u8) !void {
-    if (raw) {
-        try writer.writeAll(bytes);
-        return;
-    }
+fn writeReplacementString(writer: anytype, escaped: bool, bytes: []const u8) !void {
     const s = std.mem.trim(u8, bytes, "\n");
     if (escaped) try writeEscaped(s, writer);
     if (!escaped) try writer.writeAll(s);
