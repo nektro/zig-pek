@@ -137,6 +137,10 @@ const Parser = struct {
         std.debug.assert(std.mem.eql(u8, self.eat(.symbol), needle));
     }
 
+    pub fn eatWord(comptime self: *Parser, comptime needle: string) void {
+        std.debug.assert(std.mem.eql(u8, needle, self.eat(.word)));
+    }
+
     pub fn doChildren(comptime self: *Parser) []const Value {
         var ret: []const Value = &[_]Value{};
 
@@ -168,7 +172,7 @@ const Parser = struct {
                     var top = true;
                     while (!self.tryEatSymbol("/")) {
                         if (self.tryEatSymbol("<")) {
-                            std.debug.assert(std.mem.eql(u8, "else", self.eat(.word)));
+                            self.eatWord("else");
                             self.eatSymbol(">");
                             top = false;
                         }
@@ -178,7 +182,7 @@ const Parser = struct {
                             bottom = bottom ++ &[_]Value{self.doValue()};
                         }
                     }
-                    std.debug.assert(std.mem.eql(u8, @tagName(name), self.eat(.word)));
+                    self.eatWord(@tagName(name));
                     self.eatSymbol("/");
                     return Value{ .block = Block{
                         .name = name,
