@@ -100,6 +100,15 @@ const Parser = struct {
         return ret;
     }
 
+    fn raise(comptime line: usize, comptime pos: usize, comptime expected: []const u8, comptime found: []const u8) void {
+        @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ line, pos, expected, found }));
+    }
+
+    fn expect(comptime expected: []const u8, comptime found: []const u8, comptime line: usize, comptime pos: usize) void {
+        if (std.mem.eql(u8, found, expected)) return;
+        raise(line, pos, expected, found);
+    }
+
     fn tryEatSymbol(comptime self: *Parser, comptime needle: string) bool {
         if (self.index >= self.tokens.len) return false;
         switch (self.tokens[self.index].data) {
@@ -134,11 +143,13 @@ const Parser = struct {
     }
 
     pub fn eatSymbol(comptime self: *Parser, comptime needle: string) void {
-        std.debug.assert(std.mem.eql(u8, self.eat(.symbol), needle));
+        const tok = self.tokens[self.index];
+        expect(needle, self.eat(.symbol), tok.line, tok.pos);
     }
 
     pub fn eatWord(comptime self: *Parser, comptime needle: string) void {
-        std.debug.assert(std.mem.eql(u8, needle, self.eat(.word)));
+        const tok = self.tokens[self.index];
+        expect(needle, self.eat(.word), tok.line, tok.pos);
     }
 
     pub fn doChildren(comptime self: *Parser) []const Value {
@@ -257,9 +268,7 @@ const Parser = struct {
         defer self.index += 1;
         const tok = self.tokens[self.index];
         const tag = std.meta.activeTag(tok.data);
-        if (tag != typ) {
-            @compileError(std.fmt.comptimePrint("pek: file:{d}:{d}: expected {s}, found {s}", .{ tok.line, tok.pos, @tagName(typ), @tagName(tag) }));
-        }
+        if (tag != typ) raise(tok.line, tok.pos, @tagName(typ), @tagName(tag));
         return @field(tok.data, @tagName(typ));
     }
 
