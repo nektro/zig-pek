@@ -158,6 +158,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                     if (repl.raw) return writer.writeAll(x.?);
                     return writeReplacementString(writer, opts.escaped, x.?);
                 }
+                return x.?.nprint(writer);
             }
             return x.nprint(writer);
         },
