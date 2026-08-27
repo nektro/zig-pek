@@ -70,8 +70,9 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
             }
             if (mode == 2) {
                 if (c == input[start]) {
+                    const data = input[start .. i + 1][0..].*;
                     ret = ret ++ &[_]Token{.{
-                        .data = .{ .string = input[start .. i + 1] },
+                        .data = .{ .string = &data },
                         .line = line,
                         .pos = pos,
                     }};
@@ -100,8 +101,9 @@ pub fn do(comptime input: string, comptime symbols: []const u8) []const Token {
         if (shouldFlush) {
             if (mode == 0) {
                 if (end - start > 0) {
+                    const data = input[start..end][0..].*;
                     ret = ret ++ &[_]Token{.{
-                        .data = .{ .word = input[start..end] },
+                        .data = .{ .word = &data },
                         .line = line,
                         .pos = pos,
                     }};
