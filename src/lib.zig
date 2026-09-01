@@ -374,7 +374,8 @@ fn search(comptime args: []const string, ctx: anytype) FieldSearch(@TypeOf(ctx),
     if (comptime std.mem.eql(u8, args[0], "true")) return true;
     if (comptime std.mem.eql(u8, args[0], "false")) return false;
     if (@typeInfo(@TypeOf(ctx)) == .optional) return search(args, ctx.?);
-    const f = @field(ctx, args[0]);
+    const arg_is_number = if (comptime extras.parseDigits(usize, args[0], 10)) |_| true else |_| false;
+    const f = if (!arg_is_number) @field(ctx, args[0]) else ctx[comptime extras.parseDigits(usize, args[0], 10) catch unreachable];
     if (args.len == 1) return f;
     return search(args[1..], f);
 }
@@ -391,6 +392,14 @@ fn FieldSearch(comptime T: type, comptime args: []const string) type {
 fn Field(comptime T: type, comptime field_name: string) type {
     if (extras.isIndexable(T) and std.mem.eql(u8, field_name, "len")) {
         return usize;
+    }
+    if (extras.isTuple(T) and (if (extras.parseDigits(usize, field_name, 10)) |_| true else |_| false)) {
+        const info = @typeInfo(T).@"struct".fields;
+        const idx = extras.parseDigits(usize, field_name, 10) catch unreachable;
+        return info[idx].type;
+    }
+    if (extras.isIndexable(T) and (if (extras.parseDigits(usize, field_name, 10)) |_| true else |_| false)) {
+        return std.meta.Child(T);
     }
     switch (@typeInfo(T)) {
         .optional => |info| return Field(info.child, field_name),
