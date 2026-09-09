@@ -316,12 +316,6 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
             if (v.raw) {
                 if (@hasDecl(opts.Ctx, "pek_" ++ v.name)) @compileError("pek: attempted to call safe custom function: '" ++ v.name ++ "' but did not use '{" ++ v.name ++ "}'");
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
-                const Tup = @typeInfo(@TypeOf(func)).@"fn".params[3].type.?;
-                if (@typeInfo(Tup).@"struct".fields.len == 0) {
-                    // edge case branch because 'struct {}' is counted as a non-tuple
-                    try @call(.auto, func, .{ alloc, writer, opts, Tup{} });
-                    return;
-                }
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
                 var args: std.meta.Tuple(&types) = undefined;
