@@ -405,7 +405,6 @@ fn Field(comptime T: type, comptime field_name: string) type {
             return fld.type;
         }
     }
-    @compileLog(std.meta.fieldNames(T));
     _ = @field(@as(T, undefined), field_name);
 }
 
