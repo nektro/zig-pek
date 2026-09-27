@@ -41,12 +41,12 @@ test "document" {
         \\<html lang="en">
         \\    <head>
         \\        <title>Pek Example</title>
-        \\        <meta charset="UTF-8" />
-        \\        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        \\        <meta charset="UTF-8">
+        \\        <meta name="viewport" content="width=device-width,initial-scale=1">
         \\    </head>
         \\    <body>
         \\        <h1>Pek Example</h1>
-        \\        <hr />
+        \\        <hr>
         \\        <p>This is an example HTML document written in <a href="https://github.com/nektro/zig-pek">Pek</a>.</p>
         \\    </body>
         \\</html>
@@ -80,9 +80,9 @@ test "apostrophe attribute string" {
         \\<html lang="en">
         \\    <head>
         \\        <title>Pek Example</title>
-        \\        <meta charset="UTF-8" />
-        \\        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        \\        <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
+        \\        <meta charset="UTF-8">
+        \\        <meta name="viewport" content="width=device-width,initial-scale=1">
+        \\        <meta name="htmx-config" content='{"includeIndicatorStyles":false}'>
         \\    </head>
         \\</html>
         \\
@@ -110,7 +110,7 @@ test "fragment" {
     try expect(builder.items).toEqualString(
         \\<body>
         \\    <h1>Pek Example</h1>
-        \\    <hr />
+        \\    <hr>
         \\    <p>This is an example HTML document written in <a href="https://github.com/nektro/zig-pek">Pek</a>.</p>
         \\</body>
         \\
@@ -143,7 +143,7 @@ test "if: basic" {
     try expect(builder.items).toEqualString(
         \\<body>
         \\    <h1>Pek Example</h1>
-        \\    <hr />
+        \\    <hr>
         \\    <p>This will show up because <code>bar</code> is true instead.</p>
         \\</body>
         \\
@@ -178,7 +178,7 @@ test "if: optional" {
     try expect(builder.items).toEqualString(
         \\<body>
         \\    <h1>Pek Example</h1>
-        \\    <hr />
+        \\    <hr>
         \\    <p>This will show up because <code>bar</code> is non-null instead.</p>
         \\</body>
         \\
