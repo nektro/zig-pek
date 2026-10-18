@@ -31,8 +31,8 @@ pub fn compile(comptime Ctx: type, alloc: std.mem.Allocator, writer: anytype, co
     try do(alloc, writer, value, data, data, .{
         .Ctx = Ctx,
         .indent = 0,
-        .doindent = builtin.mode == .Debug,
-        .doindent2 = builtin.mode == .Debug,
+        .doindent = builtin.mode == .debug,
+        .doindent2 = builtin.mode == .debug,
     });
 }
 
@@ -192,7 +192,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 .@"if" => {
                     if (v.func) |n| {
                         const f = @field(opts.Ctx, "pek_" ++ n);
-                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".params.len) {
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".param_types.len) {
                             2 => f(alloc, x),
                             3 => blk: {
                                 const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
@@ -259,7 +259,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, std.mem.eql(u8, @tagName(x), y));
                     }
                     if (TI == .@"enum" and @typeInfo(@TypeOf(y)) == .int) {
-                        return doif(alloc, writer, body, bottom, data, ctx, opts, @intFromEnum(x) == y);
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, @backingInt(x) == y);
                     }
                     if (TI == .@"union" and comptime extras.isZigString(Y)) {
                         const tag = std.meta.stringToEnum(TI.@"union".tag_type.?, y) orelse {
@@ -282,7 +282,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, @tagName(x), y));
                     }
                     if (TI == .@"enum" and @typeInfo(@TypeOf(y)) == .int) {
-                        return doif(alloc, writer, body, bottom, data, ctx, opts, @intFromEnum(x) != y);
+                        return doif(alloc, writer, body, bottom, data, ctx, opts, @backingInt(x) != y);
                     }
                     if (comptime extras.isSlice(@TypeOf(x, y))) {
                         return try doif(alloc, writer, body, bottom, data, ctx, opts, !std.mem.eql(u8, x, y));
@@ -307,7 +307,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 defer list.deinit();
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
-                var args: std.meta.Tuple(&types) = undefined;
+                var args: @Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
                 try @call(.auto, func, .{ alloc, &list } ++ args);
                 try writeReplacementString(writer, opts.escaped, list.items);
@@ -318,7 +318,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 const func = @field(opts.Ctx, "pek__" ++ v.name);
                 comptime var types: [v.args.len]type = @splat(void);
                 inline for (v.args, &types) |arg, *T| T.* = ResolveArg(arg, @TypeOf(data), @TypeOf(ctx));
-                var args: std.meta.Tuple(&types) = undefined;
+                var args: @Tuple(&types) = undefined;
                 inline for (v.args, 0..) |arg, i| args[i] = try resolveArg(arg, alloc, data, ctx, opts);
                 try @call(.auto, func, .{ alloc, writer, opts, args });
                 return;
@@ -400,9 +400,9 @@ fn Field(comptime T: type, comptime field_name: string) type {
         .pointer => |info| return Field(info.child, field_name),
         else => {},
     }
-    for (std.meta.fields(T)) |fld| {
-        if (std.mem.eql(u8, fld.name, field_name)) {
-            return fld.type;
+    for (std.meta.fieldNames(T), std.meta.fieldTypes(T)) |field, ty| {
+        if (std.mem.eql(u8, field, field_name)) {
+            return ty;
         }
     }
     _ = @field(@as(T, undefined), field_name);
