@@ -223,7 +223,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 .ifnot => {
                     if (v.func) |n| {
                         const f = @field(opts.Ctx, "pek_" ++ n);
-                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".params.len) {
+                        const x2 = try switch (@typeInfo(@TypeOf(f)).@"fn".param_types.len) {
                             2 => f(alloc, x),
                             3 => blk: {
                                 const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
@@ -388,9 +388,9 @@ fn Field(comptime T: type, comptime field_name: string) type {
         return usize;
     }
     if (extras.isTuple(T) and (if (extras.parseDigits(usize, field_name, 10)) |_| true else |_| false)) {
-        const info = @typeInfo(T).@"struct".fields;
+        const field_types = @typeInfo(T).@"struct".field_types;
         const idx = extras.parseDigits(usize, field_name, 10) catch unreachable;
-        return info[idx].type;
+        return field_types[idx];
     }
     if (extras.isIndexable(T) and (if (extras.parseDigits(usize, field_name, 10)) |_| true else |_| false)) {
         return std.meta.Child(T);
