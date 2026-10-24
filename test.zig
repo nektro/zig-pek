@@ -1040,3 +1040,42 @@ test {
         \\
     );
 }
+
+// eachp
+test {
+    const alloc = std.testing.allocator;
+    var builder = nio.AllocatingWriter.init(alloc);
+    defer builder.deinit();
+    const S = struct {
+        abbr: []const u8,
+        name: []const u8,
+        index: u8,
+    };
+    const states = [_]S{
+        .{ .abbr = "MA", .name = "Massachusetts", .index = 0 },
+        .{ .abbr = "OR", .name = "Oregon", .index = 0 },
+        .{ .abbr = "CA", .name = "California", .index = 0 },
+    };
+    const doc = comptime pek.parse(
+        \\body(
+        \\    {#eachp states}
+        \\    p("The US state '"{this.name}"' can be shortened to '"{this.abbr}"'.")
+        \\    /eachp/
+        \\)
+    );
+    try pek.compileInner(
+        alloc,
+        &builder,
+        doc,
+        .{ .Ctx = @This(), .indent = 0, .doindent = true, .doindent2 = true },
+        .{ .states = &states },
+    );
+    try expect(builder.items).toEqualString(
+        \\<body>
+        \\    <p>The US state 'Massachusetts' can be shortened to 'MA'.</p>
+        \\    <p>The US state 'Oregon' can be shortened to 'OR'.</p>
+        \\    <p>The US state 'California' can be shortened to 'CA'.</p>
+        \\</body>
+        \\
+    );
+}

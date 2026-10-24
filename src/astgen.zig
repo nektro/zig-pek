@@ -42,6 +42,7 @@ pub const Block = struct {
 
     pub const Type = enum {
         each,
+        eachp,
         @"if",
         ifnot,
         ifequal,

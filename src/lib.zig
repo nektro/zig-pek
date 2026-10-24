@@ -189,6 +189,26 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         else => @compileError(nio.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
                     }
                 },
+                .eachp => {
+                    switch (v.args.len) {
+                        1 => {
+                            for (x) |*item| {
+                                if (@hasField(@TypeOf(ctx), "this")) {
+                                    try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .@"^this" = ctx.this, .this = item } }), opts);
+                                } else {
+                                    try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item } }), opts);
+                                }
+                            }
+                        },
+                        2 => {
+                            const y = try resolveArg(v.args[1], alloc, data, ctx, opts);
+                            for (x, y) |item, jtem| {
+                                try do(alloc, writer, body, null, extras.join(.{ ctx, .{ .this = item, .that = jtem } }), opts);
+                            }
+                        },
+                        else => @compileError(nio.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
+                    }
+                },
                 .@"if" => {
                     if (v.func) |n| {
                         const f = @field(opts.Ctx, "pek_" ++ n);
