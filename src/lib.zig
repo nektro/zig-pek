@@ -172,7 +172,7 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                 .each => {
                     switch (v.args.len) {
                         1 => {
-                            for (x) |item| {
+                            for (x) |*item| {
                                 if (@hasField(@TypeOf(ctx), "this")) {
                                     try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .@"^this" = ctx.this, .this = item } }), opts);
                                 } else {
@@ -189,10 +189,10 @@ fn doInner(alloc: std.mem.Allocator, writer: anytype, comptime value: astgen.Val
                         else => @compileError(nio.fmt.comptimePrint("#each block cannot have {d} iterators", .{v.args.len})),
                     }
                 },
-                .eachp => {
+                .eachv => {
                     switch (v.args.len) {
                         1 => {
-                            for (x) |*item| {
+                            for (x) |item| {
                                 if (@hasField(@TypeOf(ctx), "this")) {
                                     try do(alloc, writer, body, null, extras.join(.{ extras.omit(ctx, "this"), .{ .@"^this" = ctx.this, .this = item } }), opts);
                                 } else {
